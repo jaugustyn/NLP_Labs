@@ -9,7 +9,6 @@ import visualizer
 import classifier
 from nltk.tokenize import sent_tokenize
 
-# Load environment variables (bot token) from .env
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
@@ -25,7 +24,6 @@ CLASS_ALIASES = {
 }
 
 def extract_args(text, expected_args_count):
-    """Extract arguments enclosed in double quotes, e.g. /command "text" "class"."""
     # Find all sequences between double quotes.
     matches = re.findall(r'"([^"]*)"', text)
     if len(matches) == expected_args_count:
@@ -33,23 +31,19 @@ def extract_args(text, expected_args_count):
     return None
 
 def normalize_and_validate_class(raw_class):
-    """Normalize class alias (PL/EN) to canonical label used in dataset."""
     normalized = raw_class.strip().lower()
     return CLASS_ALIASES.get(normalized)
 
 def log_exception(context, error):
-    """Write detailed exception info to server logs only."""
     print(f"[ERROR] {context}: {type(error).__name__}: {error}")
     print(traceback.format_exc())
 
 def get_safe_error_message(error):
-    """Return a sanitized message that does not expose local details."""
     if isinstance(error, LookupError):
         return "NLP resources are missing on the server. Please contact the administrator."
     return "An internal processing error occurred. Please try again later."
 
 def handle_exception(message, context, error):
-    """Log technical details and reply with a safe user-facing message."""
     log_exception(context, error)
     bot.reply_to(message, get_safe_error_message(error))
 
@@ -251,7 +245,7 @@ def handle_stats(message):
         trigrams = list(set(nlp_core.get_ngrams(clean_tokens, 3)))
 
         response = (
-            f"📊 **DATASET STATISTICS** 📊\n\n"
+            f"**DATASET STATISTICS**\n\n"
             f"Class distribution:\n{class_stats_str}\n\n"
             f"Unique tokens (Top 10 of {len(unique_tokens)}): {list(unique_tokens)[:10]}...\n\n"
             f"Unique 2-grams (Top 5): {bigrams[:5]}...\n"
