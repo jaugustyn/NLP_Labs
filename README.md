@@ -1,17 +1,19 @@
 # NLP_Labs
 
-Przetwarzanie języka naturalnego (NLP) i modele generatywne
+Natural Language Processing (NLP) and Generative Models – laboratory exercises.
 
-## Struktura repozytorium
+## Repository Structure
 
-Repozytorium zawiera rozwiązania kolejnych laboratoriów.
-Każde laboratorium znajduje się w osobnym branchu, którego nazwa odpowiada numerowi laboratorium.
+This repository contains solutions for consecutive laboratory assignments.
+Each laboratory is stored in a **separate Git branch**, where the branch name corresponds to the laboratory number (e.g., `Lab01`, `Lab02`, etc.).
 
-## Tematyka
+Additionally, each laboratory directory (e.g., `LabXX`) contains its own **README file with detailed instructions and descriptions specific to that lab**.
 
-Laboratoria obejmują zagadnienia związane z:
+## Topics
 
-* przetwarzaniem języka naturalnego (NLP)
-* analizą tekstu
-* klasyfikacją tekstu
-* modelami generatywnymi
+The laboratories cover topics related to:
+
+* Natural Language Processing (NLP)
+* Text analysis
+* Text classification
+* Generative models
