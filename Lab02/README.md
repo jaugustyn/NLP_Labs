@@ -1,10 +1,19 @@
 # NLP Bot - Laboratory 2 (Text Classification Experiments)
 
-Extension of the Lab 1 bot. Runs full classification experiments on standard NLP datasets using multiple text representations and classifiers.
+Extension of the Lab 1 bot. Adds full classification experiments on standard NLP datasets using multiple text representations and classifiers. Lab 1 single-message commands remain available.
 
-## Features
+## Lab 1 Commands (inherited)
 
-New command:
+| Command                         | Description                                         |
+| ------------------------------- | --------------------------------------------------- |
+| `/task <name> "text" "class"`   | Run a single NLP task on given text                 |
+| `/full_pipeline "text" "class"` | Full NLP pipeline (tokenize → BoW → TF-IDF → plots) |
+| `/classifier "text"`            | Classify text using saved dataset                   |
+| `/stats`                        | Dataset statistics + charts                         |
+
+Tasks for `/task`: `tokenize`, `remove_stopwords`, `lemmatize`, `stemming`, `stats`, `n-grams`, `plot_histogram`, `plot_wordcloud`, `plot_barchart`
+
+## Lab 2 Command
 
 ```
 /classify dataset=<name> method=<model> gridsearch=<true/false> run=<n>
@@ -31,14 +40,14 @@ New command:
 
 | Output                     | Path / file                                                |
 | -------------------------- | ---------------------------------------------------------- |
-| Classification results CSV | `lab2results.csv`                                          |
+| Classification results CSV | `lab2results/results.csv`                                  |
 | Word cloud (corpus)        | `lab2plots/wordcloud_corpus.png`                           |
 | Word cloud (per class)     | `lab2plots/wordcloud_class_<class>.png`                    |
 | Confusion matrices         | `lab2plots/confusion_<emb>_<model>.png`                    |
 | Embedding visualisations   | `lab2plots/<dataset>_<model>_<emb>_<method>_embedding.png` |
 | Word embedding viz         | `lab2plots/word_embedding_pca.png`, `…_tsne.png`           |
-| Similar words              | `lab2_similar_words.txt`                                   |
-| Feature importance         | `lab2_feature_importance.txt`                              |
+| Similar words              | `lab2results/similar_words.txt`                            |
+| Feature importance         | `lab2results/feature_importance.txt`                       |
 
 ## Text representations
 
@@ -81,6 +90,7 @@ New command:
 
    ```bash
    pip install -r requirements.txt
+   python -m spacy download pl_core_news_sm
    ```
 
 5. Create `.env` in `Lab02/`:
@@ -99,12 +109,20 @@ New command:
 
 ## Project Structure
 
-| File                 | Description                             |
-| -------------------- | --------------------------------------- |
-| `bot.py`             | Telegram command handler                |
-| `experiment.py`      | Experiment orchestrator                 |
-| `dataset_loader.py`  | Dataset loading (sklearn + HuggingFace) |
-| `text_embeddings.py` | BoW, TF-IDF, Word2Vec, GloVe wrappers   |
-| `models.py`          | Classifier factory + grid search config |
-| `lab2_visualizer.py` | All visualisation functions             |
-| `requirements.txt`   | Python dependencies                     |
+```
+Lab02/
+  bot.py              — Telegram bot (Lab 1 + Lab 2 commands)
+  experiment.py       — Experiment orchestrator (pipeline)
+  dataset_loader.py   — Dataset loading (sklearn + HuggingFace)
+  text_embeddings.py  — BoW, TF-IDF, Word2Vec, GloVe wrappers
+  models.py           — Classifier factory + GridSearch config
+  visualizer.py       — Lab 2 visualisation functions
+  requirements.txt    — Python dependencies
+  lab1/
+    nlp_core.py       — Tokenization, stopwords, lemmatization, stemming
+    data_manager.py   — Save/load sentences.json
+    classifier.py     — Single-message classifier (Lab 1)
+    visualizer.py     — Lab 1 charts (histogram, wordcloud, barchart)
+    stopwords-pl.txt  — Polish stopwords list
+    sentences.json    — Labeled sentence dataset
+```
