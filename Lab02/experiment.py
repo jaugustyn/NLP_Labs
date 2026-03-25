@@ -1,31 +1,24 @@
-import os
 import csv
+import os
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score
 
 from dataset_loader import load_dataset, DATASET_QUERY_WORDS
 from text_embeddings import get_embedding, EMBEDDING_NAMES
-from models import get_model, get_grid_params, resolve_methods, ALL_MODELS
-import lab2_visualizer as viz
+from models import get_model, get_grid_params, resolve_methods
+import visualizer as viz
 
-SEEDS = [42, 1337, 2024]
+SEEDS = [42, 1337, 2137]
 
-RESULTS_FILE = "lab2results.csv"
-SIMILAR_WORDS_FILE = "lab2_similar_words.txt"
-FEATURE_IMPORTANCE_FILE = "lab2_feature_importance.txt"
+RESULTS_DIR = "results"
+RESULTS_FILE = os.path.join(RESULTS_DIR, "lab2results.csv")
+SIMILAR_WORDS_FILE = os.path.join(RESULTS_DIR, "lab2_similar_words.txt")
+FEATURE_IMPORTANCE_FILE = os.path.join(RESULTS_DIR, "lab2_feature_importance.txt")
 
-
-# ---------------------------------------------------------------------------
-# Main entry point
-# ---------------------------------------------------------------------------
 
 def run_experiment(dataset_name, method_str, gridsearch, n_runs,
                    progress_callback=None):
-    """Run the full experiment pipeline.
-
-    Returns a summary string suitable for sending to the user.
-    """
 
     def progress(msg):
         if progress_callback:
@@ -35,21 +28,22 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
                 pass
         print(msg)
 
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     seeds = SEEDS[:n_runs]
     method_names = resolve_methods(method_str)
 
-    # ---- 1. Load dataset ----
+    # 1. Load dataset
     progress(f"Loading dataset '{dataset_name}'...")
     texts, labels, label_names = load_dataset(dataset_name)
     progress(f"Loaded {len(texts)} samples, {len(label_names)} classes")
 
-    # ---- 2. Word clouds ----
+    # 2. Word clouds
     progress("Generating word clouds...")
     viz.plot_wordcloud_corpus(texts)
     viz.plot_wordcloud_per_class(texts, labels, label_names)
     progress("Word clouds done.")
 
-    # ---- 3. Pre-compute embeddings on full corpus ----
+    # 3. Pre-compute embeddings on full corpus
     all_embeddings = {}
     word_vector_models = {}
 
@@ -63,29 +57,25 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
         shape = X.shape if hasattr(X, "shape") else "?"
         progress(f"  {emb_name} done — shape {shape}")
 
-    # ---- 4. Run classification experiments ----
+    # 4. Run classification experiments
     results = []
     feature_importance_lines = []
 
     for emb_name in EMBEDDING_NAMES:
         X_all, emb = all_embeddings[emb_name]
 
-        # Pre-compute embedding visualisations ONCE per (embedding, method)
-        # since the reduced coordinates are identical for all classifiers.
+        # Pre-compute embedding visualisations once per embedding
         last_seed = seeds[-1]
-        _idx = np.arange(len(texts))
+        idx = np.arange(len(texts))
         _, test_idx_viz = train_test_split(
-            _idx, test_size=0.2, random_state=last_seed, stratify=labels,
+            idx, test_size=0.2, random_state=last_seed, stratify=labels,
         )
         X_test_viz = X_all[test_idx_viz]
         y_test_viz = labels[test_idx_viz]
 
-        reduced_2d = {}
         for vm in ["pca", "tsne", "svd"]:
             progress(f"  Reducing {emb_name} with {vm.upper()}...")
             X_2d, y_sub = viz.reduce_for_visualization(X_test_viz, y_test_viz, vm)
-            reduced_2d[vm] = (X_2d, y_sub)
-            # Write a file per model using the same coordinates
             for model_name in method_names:
                 viz.plot_embedding_2d(
                     X_2d, y_sub, label_names, vm,
@@ -100,7 +90,6 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
             last_model = None
 
             for seed in seeds:
-                # ---- split ----
                 indices = np.arange(len(texts))
                 train_idx, test_idx = train_test_split(
                     indices, test_size=0.2, random_state=seed, stratify=labels,
@@ -109,7 +98,6 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
                 y_train = labels[train_idx]
                 y_test = labels[test_idx]
 
-                # ---- model ----
                 model = get_model(model_name, emb_name, seed)
 
                 if gridsearch:
@@ -128,7 +116,6 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
                 else:
                     model.fit(X_train, y_train)
 
-                # ---- evaluate ----
                 y_pred = model.predict(X_test)
                 acc = accuracy_score(y_test, y_pred)
                 f1 = f1_score(y_test, y_pred, average="macro")
@@ -145,72 +132,63 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
                 last_y_true, last_y_pred = y_test, y_pred
                 last_model = model
 
-            # ---- averaged result ----
             avg_acc = np.mean([r["acc"] for r in run_metrics])
             avg_f1 = np.mean([r["f1"] for r in run_metrics])
             progress(f"  => avg acc={avg_acc:.4f}  macro_f1={avg_f1:.4f}")
 
-            # ---- confusion matrix ----
             viz.plot_confusion(
                 last_y_true, last_y_pred, label_names,
                 f"confusion_{emb_name}_{model_name}.png",
             )
 
-            # ---- feature importance ----
-            fi = _extract_feature_importance(
+            fi = extract_feature_importance(
                 last_model, emb, model_name, emb_name, label_names,
             )
             if fi:
                 feature_importance_lines.append(fi)
 
-    # ---- 5. Similar words (word2vec / glove) ----
+    # 5. Similar words (word2vec / glove)
     if word_vector_models:
-        _save_similar_words(word_vector_models, dataset_name)
+        save_similar_words(word_vector_models, dataset_name)
         progress("Similar words saved.")
 
-    # ---- 6. Word-level embedding visualisations ----
+    # 6. Word-level embedding visualisations
     query_words = DATASET_QUERY_WORDS.get(dataset_name, ["good", "bad", "great"])
     for wm_name, wm_emb in word_vector_models.items():
         wv = wm_emb.get_word_vectors()
         if wv is None:
             continue
-        # Expand word list with nearest neighbours
         expanded = list(query_words)
         for w in query_words:
             if w in wv:
                 expanded.extend([s[0] for s in wv.most_similar(w, topn=3)])
-        expanded = list(dict.fromkeys(expanded))  # deduplicate
+        expanded = list(dict.fromkeys(expanded))
         viz.plot_word_embeddings(wv, expanded, "pca", "word_embedding_pca.png")
         viz.plot_word_embeddings(wv, expanded, "tsne", "word_embedding_tsne.png")
     progress("Word embedding visualisations done.")
 
-    # ---- 7. Save CSV ----
-    _save_results_csv(results)
+    # 7. Save CSV
+    save_results_csv(results)
     progress(f"Results saved to {RESULTS_FILE}")
 
-    # ---- 8. Feature importance file ----
+    # 8. Feature importance file
     if feature_importance_lines:
-        _save_feature_importance_file(feature_importance_lines)
+        save_feature_importance_file(feature_importance_lines)
         progress(f"Feature importance saved to {FEATURE_IMPORTANCE_FILE}")
 
-    return _format_summary(results, n_runs)
+    return format_summary(results, n_runs)
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _save_results_csv(results):
+def save_results_csv(results):
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(RESULTS_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["embedding", "model", "accuracy", "macro_f1", "seed"])
         writer.writeheader()
         writer.writerows(results)
 
-
-def _format_summary(results, n_runs):
+def format_summary(results, n_runs):
     lines = ["=== EXPERIMENT RESULTS ===\n"]
 
-    # Group by (embedding, model)
     combos = {}
     for r in results:
         key = (r["embedding"], r["model"])
@@ -227,12 +205,7 @@ def _format_summary(results, n_runs):
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Feature importance
-# ---------------------------------------------------------------------------
-
-def _extract_feature_importance(model, embedding, model_name, emb_name, label_names):
-    """Return a formatted string block with top-10 features, or None."""
+def extract_feature_importance(model, embedding, model_name, emb_name, label_names):
     feature_names = embedding.get_feature_names()
     if feature_names is None:
         return None
@@ -292,20 +265,15 @@ def _extract_feature_importance(model, embedding, model_name, emb_name, label_na
 
     return "\n".join(lines)
 
-
-def _save_feature_importance_file(blocks):
+def save_feature_importance_file(blocks):
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(FEATURE_IMPORTANCE_FILE, "w", encoding="utf-8") as f:
         f.write("FEATURE IMPORTANCE REPORT\n")
         f.write("=" * 50 + "\n")
         for block in blocks:
             f.write(block + "\n")
 
-
-# ---------------------------------------------------------------------------
-# Similar words
-# ---------------------------------------------------------------------------
-
-def _save_similar_words(word_vector_models, dataset_name):
+def save_similar_words(word_vector_models, dataset_name):
     query_words = DATASET_QUERY_WORDS.get(dataset_name, ["good", "bad", "great"])
     lines = ["SIMILAR WORDS REPORT", "=" * 50, ""]
 
@@ -324,5 +292,6 @@ def _save_similar_words(word_vector_models, dataset_name):
                 lines.append(f"    {rank:>2}. {sw:<20} {score:.4f}")
         lines.append("")
 
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(SIMILAR_WORDS_FILE, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))

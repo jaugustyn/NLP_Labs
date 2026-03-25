@@ -12,20 +12,16 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 PLOTS_DIR = "lab2plots"
 MAX_VIZ_SAMPLES = 2000
 
-
-def _ensure_dir():
+def ensure_dir():
     os.makedirs(PLOTS_DIR, exist_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Word clouds
-# ---------------------------------------------------------------------------
-
 def plot_wordcloud_corpus(texts):
-    _ensure_dir()
+    ensure_dir()
     all_text = " ".join(texts)
     try:
-        wc = WordCloud(width=800, height=400, background_color="white").generate(all_text)
+        wc = WordCloud(width=800, height=400, background_color="white",
+                       min_word_length=3).generate(all_text)
     except ValueError:
         return None
     plt.figure(figsize=(10, 5))
@@ -37,9 +33,8 @@ def plot_wordcloud_corpus(texts):
     plt.close()
     return path
 
-
 def plot_wordcloud_per_class(texts, labels, label_names):
-    _ensure_dir()
+    ensure_dir()
     paths = []
     for cls_idx, cls_name in enumerate(label_names):
         cls_texts = [t for t, l in zip(texts, labels) if l == cls_idx]
@@ -47,7 +42,8 @@ def plot_wordcloud_per_class(texts, labels, label_names):
             continue
         all_text = " ".join(cls_texts)
         try:
-            wc = WordCloud(width=800, height=400, background_color="white").generate(all_text)
+            wc = WordCloud(width=800, height=400, background_color="white",
+                           min_word_length=3).generate(all_text)
         except ValueError:
             continue
         plt.figure(figsize=(10, 5))
@@ -62,16 +58,10 @@ def plot_wordcloud_per_class(texts, labels, label_names):
     return paths
 
 
-# ---------------------------------------------------------------------------
-# Dimensionality reduction helper
-# ---------------------------------------------------------------------------
-
-def _reduce_dim(X, method, n_components=2):
-    """Reduce *X* to *n_components* using the requested method."""
+def reduce_dim(X, method, n_components=2):
     if issparse(X):
         if method == "svd":
             return TruncatedSVD(n_components=n_components, random_state=42).fit_transform(X)
-        # Sparse → dense via TruncatedSVD first
         n_pre = min(50, X.shape[1] - 1)
         X_dense = TruncatedSVD(n_components=n_pre, random_state=42).fit_transform(X)
     else:
@@ -90,31 +80,23 @@ def _reduce_dim(X, method, n_components=2):
     raise ValueError(f"Unknown reduction method: {method}")
 
 
-# ---------------------------------------------------------------------------
-# Embedding visualisation (documents coloured by class)
-# ---------------------------------------------------------------------------
-
 def reduce_for_visualization(X, labels, method):
-    """Subsample + reduce to 2-D. Returns (X_2d, labels_sub)."""
     n = X.shape[0]
     if n > MAX_VIZ_SAMPLES:
         rng = np.random.RandomState(42)
         idx = rng.choice(n, MAX_VIZ_SAMPLES, replace=False)
         X = X[idx]
         labels = labels[idx]
-    X_2d = _reduce_dim(X, method)
+    X_2d = reduce_dim(X, method)
     return X_2d, labels
 
-
 def plot_embedding_visualization(X, labels, label_names, method, filename):
-    _ensure_dir()
+    ensure_dir()
     X_2d, labels = reduce_for_visualization(X, labels, method)
     return plot_embedding_2d(X_2d, labels, label_names, method, filename)
 
-
 def plot_embedding_2d(X_2d, labels, label_names, method, filename):
-    """Plot pre-computed 2-D coordinates (skip reduction)."""
-    _ensure_dir()
+    ensure_dir()
     plt.figure(figsize=(10, 8))
     unique = np.unique(labels)
     for lbl in unique:
@@ -131,12 +113,8 @@ def plot_embedding_2d(X_2d, labels, label_names, method, filename):
     return path
 
 
-# ---------------------------------------------------------------------------
-# Confusion matrix
-# ---------------------------------------------------------------------------
-
 def plot_confusion(y_true, y_pred, label_names, filename):
-    _ensure_dir()
+    ensure_dir()
     cm = confusion_matrix(y_true, y_pred)
 
     n_classes = len(label_names)
@@ -158,13 +136,8 @@ def plot_confusion(y_true, y_pred, label_names, filename):
     return path
 
 
-# ---------------------------------------------------------------------------
-# Word-level embedding visualisation
-# ---------------------------------------------------------------------------
-
 def plot_word_embeddings(keyed_vectors, words, method, filename):
-    """Scatter plot of selected words reduced to 2-D."""
-    _ensure_dir()
+    ensure_dir()
     existing = [w for w in words if w in keyed_vectors]
     if len(existing) < 2:
         return None

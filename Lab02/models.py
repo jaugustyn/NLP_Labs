@@ -20,9 +20,7 @@ GRID_PARAMS = {
     "logreg": {"C": [0.1, 1, 10]},
 }
 
-
 def get_model(name, embedding_type="bow", seed=42):
-    """Return a fresh classifier instance."""
     if name == "nb":
         if embedding_type in ("word2vec", "glove"):
             return GaussianNB()
@@ -36,18 +34,14 @@ def get_model(name, embedding_type="bow", seed=42):
     else:
         raise ValueError(f"Unknown model: {name}. Available: {ALL_MODELS}")
 
-
 def get_grid_params(name, embedding_type="bow"):
-    """Return the hyper-parameter grid for GridSearchCV."""
     if name == "nb":
         if embedding_type in ("word2vec", "glove"):
             return GRID_PARAMS["nb_gaussian"]
         return GRID_PARAMS["nb_multinomial"]
     return GRID_PARAMS.get(name, {})
 
-
 def resolve_methods(method_str):
-    """Parse the 'method' parameter from the bot command."""
     if method_str.strip().lower() == "all":
         return list(ALL_MODELS)
     methods = [m.strip().lower() for m in method_str.split(",")]

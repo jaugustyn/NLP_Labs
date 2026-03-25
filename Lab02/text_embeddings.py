@@ -3,7 +3,6 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
 class BowEmbedding:
-    """Bag-of-Words text representation."""
 
     def __init__(self, max_features=10000):
         self.vectorizer = CountVectorizer(max_features=max_features)
@@ -26,7 +25,6 @@ class BowEmbedding:
 
 
 class TfidfEmbedding:
-    """TF-IDF text representation."""
 
     def __init__(self, max_features=10000):
         self.vectorizer = TfidfVectorizer(max_features=max_features)
@@ -49,10 +47,7 @@ class TfidfEmbedding:
 
 
 class Word2VecEmbedding:
-    """Word2Vec embedding trained on the corpus.
-
-    Document vector = mean of word vectors.
-    """
+    # Document vector = mean of word vectors.
 
     def __init__(self, vector_size=100, window=5, min_count=2):
         self.vector_size = vector_size
@@ -66,7 +61,6 @@ class Word2VecEmbedding:
 
     def fit(self, texts):
         from gensim.models import Word2Vec
-
         tokenized = self._tokenize(texts)
         self.model = Word2Vec(
             sentences=tokenized,
@@ -101,10 +95,7 @@ class Word2VecEmbedding:
 
 
 class GloveEmbedding:
-    """Pre-trained GloVe embedding (via gensim downloader).
-
-    Document vector = mean of word vectors.
-    """
+    # Pre-trained GloVe via gensim. Document vector = mean of word vectors.
 
     _cached_model = None
 
@@ -116,7 +107,6 @@ class GloveEmbedding:
     def fit(self, texts):
         if GloveEmbedding._cached_model is None:
             import gensim.downloader as api
-
             print(f"Downloading GloVe model '{self.model_name}' (first time only)...")
             GloveEmbedding._cached_model = api.load(self.model_name)
         self.model = GloveEmbedding._cached_model
@@ -145,10 +135,6 @@ class GloveEmbedding:
         return self.model
 
 
-# ---------------------------------------------------------------------------
-# Registry
-# ---------------------------------------------------------------------------
-
 EMBEDDING_CLASSES = {
     "bow": BowEmbedding,
     "tfidf": TfidfEmbedding,
@@ -157,7 +143,6 @@ EMBEDDING_CLASSES = {
 }
 
 EMBEDDING_NAMES = list(EMBEDDING_CLASSES.keys())
-
 
 def get_embedding(name):
     cls = EMBEDDING_CLASSES.get(name)
