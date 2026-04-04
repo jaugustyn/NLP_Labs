@@ -98,7 +98,7 @@ HELP_TEXT = (
     "  Methods: nb, rf, mlp, logreg, all\n\n"
     "--- Lab 3 ---\n"
     "/sentiment method=<m> text=\"...\" [dataset=<d>]\n"
-    "  Methods: rule, nb, transformer, textblob, stanza,\n"
+    "  Methods: rule, nb, rf, transformer, textblob, stanza,\n"
     "  simplernn, lstm, gru\n\n"
     "/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom>\n\n"
     "/compare dataset=<amazon|imdb|custom> methods=<m1,m2,...>\n\n"
@@ -179,7 +179,7 @@ def _handle_sentiment(bot, message):
         label, confidence = predict_sentiment(method, text, dataset)
 
         response = ""
-        if dataset and method in NEURAL_MODELS + ["nb"]:
+        if dataset and method in NEURAL_MODELS + ["nb", "rf"]:
             response += f"Dataset: {dataset}\n"
         response += (
             f"Model: {method.upper()}\n"
@@ -346,8 +346,8 @@ def _handle_compare(bot, message):
                 test_texts = [texts[i] for i in test_idx]
                 y_true = labels[test_idx]
 
-                # Pre-train NB if needed
-                _train_nb_if_needed(
+                # Pre-train ML models if needed
+                _train_ml_if_needed(
                     [texts[i] for i in train_idx],
                     labels[train_idx], label_names, dataset_name,
                 )
@@ -440,25 +440,33 @@ def _handle_compare(bot, message):
         bot.reply_to(message, f"Error: {e}")
 
 
-def _train_nb_if_needed(train_texts, train_labels, label_names, dataset_name):
-    """Train and save NB model for comparison if not already saved."""
+def _train_ml_if_needed(train_texts, train_labels, label_names, dataset_name):
+    """Train and save NB + RF models for comparison if not already saved."""
     from model_loader import load_sklearn_model, save_sklearn_model
-
-    if load_sklearn_model("nb", dataset_name) is not None:
-        return
-
-    from sklearn.naive_bayes import MultinomialNB
     from sklearn.feature_extraction.text import TfidfVectorizer
     from preprocessing import clean_text
 
     cleaned = [clean_text(t) for t in train_texts]
-    vec = TfidfVectorizer(max_features=10000)
-    X = vec.fit_transform(cleaned)
-    model = MultinomialNB()
-    model.fit(X, train_labels)
-    save_sklearn_model("nb", dataset_name, {
-        "vectorizer": vec, "model": model, "label_names": label_names,
-    })
+
+    for model_name, ModelClass in [("nb", None), ("rf", None)]:
+        if load_sklearn_model(model_name, dataset_name) is not None:
+            continue
+
+        if model_name == "nb":
+            from sklearn.naive_bayes import MultinomialNB
+            clf = MultinomialNB()
+        else:
+            from sklearn.ensemble import RandomForestClassifier
+            clf = RandomForestClassifier(
+                n_estimators=100, random_state=42, n_jobs=-1,
+            )
+
+        vec = TfidfVectorizer(max_features=10000)
+        X = vec.fit_transform(cleaned)
+        clf.fit(X, train_labels)
+        save_sklearn_model(model_name, dataset_name, {
+            "vectorizer": vec, "model": clf, "label_names": label_names,
+        })
 
 
 def _batch_predict(method, texts, label_names, dataset_name):
@@ -488,8 +496,8 @@ def _model_path_for(method, dataset_name):
     """Get the model file path string for a method."""
     if method in NEURAL_MODELS:
         return os.path.join(MODELS_DIR, f"{method}_{dataset_name}.h5")
-    if method == "nb":
-        return os.path.join(MODELS_DIR, f"nb_{dataset_name}_sklearn.pkl")
+    if method in ("nb", "rf"):
+        return os.path.join(MODELS_DIR, f"{method}_{dataset_name}_sklearn.pkl")
     return ""
 
 

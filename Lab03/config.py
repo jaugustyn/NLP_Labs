@@ -16,18 +16,18 @@ EMBEDDING_DIM = 100
 MAX_VOCAB_SIZE = 20000
 BATCH_SIZE = 32
 EPOCHS = 10
-EARLY_STOPPING_PATIENCE = 3
+EARLY_STOPPING_PATIENCE = None  # Computed as 10% of EPOCHS (see training.py)
 MAX_LEN_OPTIONS = [100, 150, 200, 300]
 DEFAULT_MAX_LEN = 200
 MAX_SAMPLES = 5000
 
 # Sentiment methods
 SENTIMENT_METHODS = [
-    "rule", "nb", "transformer", "textblob", "stanza",
+    "rule", "nb", "rf", "transformer", "textblob", "stanza",
     "simplernn", "lstm", "gru",
 ]
 NEURAL_MODELS = ["simplernn", "lstm", "gru"]
-ML_MODELS = ["nb"]
+ML_MODELS = ["nb", "rf"]
 
 # Datasets
 VALID_DATASETS = ["amazon", "imdb", "custom"]

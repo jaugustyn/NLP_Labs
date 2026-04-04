@@ -77,6 +77,35 @@ def predict_nb(text, dataset_name="imdb"):
     return label_names[pred], round(proba, 4)
 
 
+# ===================== 2b. Random Forest =====================
+
+def predict_rf(text, dataset_name="imdb"):
+    """Predict with Random Forest. Loads saved model or trains on-the-fly."""
+    saved = load_sklearn_model("rf", dataset_name)
+    if saved:
+        vec = saved["vectorizer"]
+        model = saved["model"]
+        label_names = saved["label_names"]
+    else:
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from data_loader import load_dataset
+
+        texts, labels, label_names = load_dataset(dataset_name)
+        vec = TfidfVectorizer(max_features=10000)
+        X = vec.fit_transform(texts)
+        model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+        model.fit(X, labels)
+        save_sklearn_model("rf", dataset_name, {
+            "vectorizer": vec, "model": model, "label_names": label_names,
+        })
+
+    X_new = vec.transform([clean_text(text)])
+    pred = model.predict(X_new)[0]
+    proba = float(model.predict_proba(X_new).max())
+    return label_names[pred], round(proba, 4)
+
+
 # ===================== 3. Transformer =====================
 
 _transformer_pipe = None
@@ -175,6 +204,8 @@ def predict_sentiment(method, text, dataset_name=None):
         return predict_rule(text)
     elif method == "nb":
         return predict_nb(text, dataset_name or "imdb")
+    elif method == "rf":
+        return predict_rf(text, dataset_name or "imdb")
     elif method == "transformer":
         return predict_transformer(text)
     elif method == "textblob":

@@ -91,11 +91,12 @@ def train_neural_model(model_type, dataset_name, texts, labels, label_names,
                          num_classes)
 
     # Train
+    patience = EARLY_STOPPING_PATIENCE or max(1, round(EPOCHS * 0.1))
     es = EarlyStopping(
-        monitor="val_loss", patience=EARLY_STOPPING_PATIENCE,
+        monitor="val_loss", patience=patience,
         restore_best_weights=True,
     )
-    progress(f"Training for up to {EPOCHS} epochs...")
+    progress(f"Training for up to {EPOCHS} epochs (early stopping patience={patience})...")
     history = model.fit(
         X_train, y_train,
         validation_data=(X_val, y_val),
