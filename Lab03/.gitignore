@@ -1,0 +1,8 @@
+venv/
+test_env/
+__pycache__/
+*.pyc
+.env
+models/
+lab3plots/
+results/
