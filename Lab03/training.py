@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from config import (
     MODELS_DIR, EMBEDDING_DIM, MAX_VOCAB_SIZE, BATCH_SIZE,
-    EPOCHS, EARLY_STOPPING_PATIENCE, DEFAULT_MAX_LEN,
+    EPOCHS, DEFAULT_MAX_LEN,
 )
 from preprocessing import clean_text, build_tokenizer, texts_to_padded
 
@@ -44,7 +44,6 @@ def _build_model(model_type, vocab_size, embedding_dim, max_len, num_classes):
 def train_neural_model(model_type, dataset_name, texts, labels, label_names,
                        max_len=DEFAULT_MAX_LEN, progress_callback=None):
     """Train a neural model and save all artifacts. Returns result dict."""
-    from tensorflow.keras.callbacks import EarlyStopping
 
     os.makedirs(MODELS_DIR, exist_ok=True)
 
@@ -90,18 +89,12 @@ def train_neural_model(model_type, dataset_name, texts, labels, label_names,
                          num_classes)
 
     # Train
-    patience = EARLY_STOPPING_PATIENCE or max(1, round(EPOCHS * 0.1))
-    es = EarlyStopping(
-        monitor="val_loss", patience=patience,
-        restore_best_weights=True,
-    )
-    progress(f"Training for up to {EPOCHS} epochs (early stopping patience={patience})...")
+    progress(f"Training for {EPOCHS} epochs...")
     history = model.fit(
         X_train, y_train,
         validation_data=(X_val, y_val),
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
-        callbacks=[es],
         verbose=0,
     )
 
