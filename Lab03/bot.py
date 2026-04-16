@@ -14,5 +14,5 @@ bot = telebot.TeleBot(TOKEN)
 register_handlers(bot)
 
 if __name__ == "__main__":
-    print("NLP Bot (Lab 1 + Lab 3) is starting...")
+    print("NLP Bot is starting...")
     bot.infinity_polling()

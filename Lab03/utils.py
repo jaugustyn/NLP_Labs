@@ -19,13 +19,11 @@ def extract_quoted_args(text, count):
 
 
 def log_error(context, error):
-    """Log error with traceback to console."""
     print(f"[ERROR] {context}: {type(error).__name__}: {error}")
     print(traceback.format_exc())
 
 
 def format_duration(seconds):
-    """Format seconds into human-readable duration."""
     if seconds < 60:
         return f"{seconds:.1f}s"
     minutes = int(seconds // 60)

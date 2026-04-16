@@ -10,7 +10,6 @@ def clean_text(text):
 
 
 def build_tokenizer(texts, max_vocab_size=20000):
-    """Build and fit a Keras Tokenizer on the given texts."""
     from tensorflow.keras.preprocessing.text import Tokenizer
 
     tokenizer = Tokenizer(num_words=max_vocab_size, oov_token="<OOV>")

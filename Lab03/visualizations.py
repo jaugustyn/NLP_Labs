@@ -43,7 +43,6 @@ def plot_training_history(history, model_type, dataset_name):
 
 
 def plot_confusion_matrix(y_true, y_pred, label_names, method, dataset_name):
-    """Plot and save a confusion matrix."""
     from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
     _ensure_dir()
@@ -94,7 +93,6 @@ def plot_comparison(results_df, dataset_name):
 
 
 def plot_wordcloud(texts, label, dataset_name):
-    """Generate a word cloud for given texts."""
     from wordcloud import WordCloud
 
     _ensure_dir()
@@ -120,7 +118,6 @@ def plot_wordcloud(texts, label, dataset_name):
 
 
 def plot_class_distribution(label_counts, dataset_name):
-    """Bar chart showing class distribution."""
     _ensure_dir()
     labels = list(label_counts.keys())
     counts = list(label_counts.values())

@@ -13,7 +13,6 @@ from preprocessing import clean_text, build_tokenizer, texts_to_padded
 
 
 def _build_model(model_type, vocab_size, embedding_dim, max_len, num_classes):
-    """Build a Keras sequential model for text classification."""
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import (
         Embedding, SimpleRNN, LSTM, GRU, Dense, Dropout,

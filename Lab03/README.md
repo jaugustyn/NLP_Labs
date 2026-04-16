@@ -35,8 +35,8 @@ Tasks for `/task`: `tokenize`, `remove_stopwords`, `lemmatize`, `stemming`, `sta
 
 ### Lab 2 (Inherited)
 
-| Command | Description |
-|---------|-------------|
+| Command                                                                   | Description                   |
+| ------------------------------------------------------------------------- | ----------------------------- |
 | `/classify dataset=<name> method=<model> gridsearch=<true/false> run=<n>` | Run classification experiment |
 
 | Parameter  | Values                                            | Description                      |

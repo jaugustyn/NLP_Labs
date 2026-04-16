@@ -175,7 +175,6 @@ def predict_stanza(text):
 # ===================== 6-8. Neural (SimpleRNN / LSTM / GRU) =====================
 
 def predict_neural(text, model_type, dataset_name):
-    """Predict with a saved Keras model."""
     model, tokenizer, le, meta = load_neural_model(model_type, dataset_name)
     max_len = meta.get("max_len", 200)
     num_classes = meta.get("num_classes", 2)
@@ -199,7 +198,6 @@ def predict_neural(text, model_type, dataset_name):
 # ===================== Dispatcher =====================
 
 def predict_sentiment(method, text, dataset_name=None):
-    """Route prediction to the correct sentiment method."""
     if method == "rule":
         return predict_rule(text)
     elif method == "nb":

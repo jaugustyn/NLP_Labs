@@ -54,7 +54,6 @@ def save_sklearn_model(model_name, dataset_name, data):
 
 
 def list_models():
-    """List all saved models in models/ directory."""
     if not os.path.exists(MODELS_DIR):
         return []
 

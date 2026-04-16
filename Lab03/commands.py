@@ -26,7 +26,6 @@ from lab2 import visualizer as lab2_visualizer
 
 
 def register_handlers(bot):
-    """Register all command handlers on the Telegram bot."""
 
     @bot.message_handler(commands=["start", "help"])
     def cmd_help(message):
@@ -248,7 +247,6 @@ def _handle_train(bot, message):
                     progress_callback=progress,
                 )
 
-                # Training history plot
                 plot_path = viz.plot_training_history(
                     result["history"], model_type, dataset_name,
                 )
@@ -346,7 +344,6 @@ def _handle_compare(bot, message):
                 test_texts = [texts[i] for i in test_idx]
                 y_true = labels[test_idx]
 
-                # Pre-train ML models if needed
                 _train_ml_if_needed(
                     [texts[i] for i in train_idx],
                     labels[train_idx], label_names, dataset_name,
@@ -448,7 +445,7 @@ def _train_ml_if_needed(train_texts, train_labels, label_names, dataset_name):
 
     cleaned = [clean_text(t) for t in train_texts]
 
-    for model_name, ModelClass in [("nb", None), ("rf", None)]:
+    for model_name in ["nb", "rf"]:
         if load_sklearn_model(model_name, dataset_name) is not None:
             continue
 
@@ -493,7 +490,6 @@ def _batch_predict(method, texts, label_names, dataset_name):
 
 
 def _model_path_for(method, dataset_name):
-    """Get the model file path string for a method."""
     if method in NEURAL_MODELS:
         return os.path.join(MODELS_DIR, f"{method}_{dataset_name}.h5")
     if method in ("nb", "rf"):
