@@ -4,7 +4,7 @@ Extension of Lab 1 + Lab 2 bot with sentiment analysis capabilities:
 
 - All Lab 1 NLP commands (tokenize, lemmatize, stemming, etc.)
 - All Lab 2 classification experiments (BoW, TF-IDF, Word2Vec, GloVe + NB, RF, MLP, LogReg)
-- 8 sentiment analysis methods (rule-based, ML, transformer, neural)
+- 9 sentiment analysis methods (rule-based, ML, transformer, neural)
 - Sequential model training (SimpleRNN, LSTM, GRU)
 - Custom dataset management (sentiment_dataset.csv)
 - Method comparison with metrics and visualizations
@@ -52,6 +52,7 @@ Tasks for `/task`: `tokenize`, `remove_stopwords`, `lemmatize`, `stemming`, `sta
 | ------------- | ------------------------------------ | ------------------------------------- |
 | `rule`        | Rule-based (PL/EN sentiment lexicon) | No training needed                    |
 | `nb`          | Naive Bayes + TF-IDF                 | Auto-trains on first use              |
+| `rf`          | Random Forest + TF-IDF               | Auto-trains on first use              |
 | `transformer` | DistilBERT (HuggingFace)             | English, no training                  |
 | `textblob`    | TextBlob polarity                    | English, no training                  |
 | `stanza`      | Stanza sentiment                     | English, downloads model on first use |
@@ -73,14 +74,13 @@ Embedding(vocab_size, 100, input_length=max_len)
 
 ### Parameters
 
-| Parameter                 | Default | Description                |
-| ------------------------- | ------- | -------------------------- |
-| `EMBEDDING_DIM`           | 100     | Embedding layer dimension  |
-| `DEFAULT_MAX_LEN`         | 200     | Sequence padding length    |
-| `MAX_VOCAB_SIZE`          | 20,000  | Tokenizer vocabulary limit |
-| `BATCH_SIZE`              | 32      | Training batch size        |
-| `EPOCHS`                  | 10      | Maximum epochs             |
-| `EARLY_STOPPING_PATIENCE` | 3       | Early stopping patience    |
+| Parameter         | Default | Description                |
+| ----------------- | ------- | -------------------------- |
+| `EMBEDDING_DIM`   | 100     | Embedding layer dimension  |
+| `DEFAULT_MAX_LEN` | 200     | Sequence padding length    |
+| `MAX_VOCAB_SIZE`  | 20,000  | Tokenizer vocabulary limit |
+| `BATCH_SIZE`      | 32      | Training batch size        |
+| `EPOCHS`          | 10      | Number of training epochs  |
 
 ### Experimenting with max_len
 
@@ -145,7 +145,7 @@ Lab03/
 ├── data_loader.py         — Dataset loading & custom CSV management
 ├── training.py            — Neural model building & training
 ├── model_loader.py        — Model loading, saving & listing
-├── sentiment_methods.py   — 8 sentiment analysis methods
+├── sentiment_methods.py   — 9 sentiment analysis methods
 ├── visualizations.py      — All plots & charts
 ├── sentiment_dataset.csv  — Custom dataset (starter, 15 records)
 ├── requirements.txt       — Python dependencies

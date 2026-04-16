@@ -80,8 +80,16 @@ def add_record(text, label):
             f"Unknown label: '{label}'. Allowed: {', '.join(CUSTOM_LABELS)}"
         )
     file_exists = os.path.exists(CUSTOM_DATASET_FILE)
+    if file_exists:
+        with open(CUSTOM_DATASET_FILE, "rb") as f:
+            f.seek(-1, 2)
+            needs_newline = f.read(1) != b"\n"
+    else:
+        needs_newline = False
     with open(CUSTOM_DATASET_FILE, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+        if needs_newline:
+            f.write("\n")
+        writer = csv.writer(f, quoting=csv.QUOTE_ALL)
         if not file_exists:
             writer.writerow(["text", "label"])
         writer.writerow([text, normalized])

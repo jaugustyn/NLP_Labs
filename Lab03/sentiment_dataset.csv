@@ -14,3 +14,7 @@ text,label
 "Aplikacja ciagle sie zawiesza i traci moje dane",negatywny
 "Jedzenie bylo zimne, niesmaczne i podane bardzo pozno",negatywny
 "Nie polecam tego zakupu, bo jakosc jest bardzo slaba",negatywny
+"Obsługa była poprawna ale niczym mnie nie zachwyciła",neutralny
+"Obsługa była świetna",pozytywny
+"Obsługa była fantastyczna",pozytywny
+"Obsługa była tragiczna","negatywny"
