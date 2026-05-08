@@ -1,7 +1,7 @@
-import numpy as np
+﻿import numpy as np
 
-from preprocessing import clean_text, texts_to_padded
-from model_loader import (
+from lab3.preprocessing import clean_text, texts_to_padded
+from lab3.model_loader import (
     load_neural_model, load_sklearn_model, save_sklearn_model,
     find_model_for_method,
 )
@@ -21,16 +21,16 @@ _NEG_EN = {
     "annoying", "frustrated", "garbage", "rubbish",
 }
 _POS_PL = {
-    "świetny", "super", "doskonały", "wspaniały", "cudowny", "fantastyczny",
-    "kocham", "najlepszy", "piękny", "szczęśliwy", "polecam", "rewelacyjny",
+    "Ĺ›wietny", "super", "doskonaĹ‚y", "wspaniaĹ‚y", "cudowny", "fantastyczny",
+    "kocham", "najlepszy", "piÄ™kny", "szczÄ™Ĺ›liwy", "polecam", "rewelacyjny",
     "genialny", "zadowolony", "uwielbiam", "idealny", "perfekcyjny",
-    "znakomity", "wspaniale", "świetnie", "doskonale",
+    "znakomity", "wspaniale", "Ĺ›wietnie", "doskonale",
 }
 _NEG_PL = {
-    "zły", "okropny", "fatalny", "straszny", "najgorszy", "nienawidzę",
-    "słaby", "rozczarowany", "bezużyteczny", "uszkodzony", "nudny",
+    "zĹ‚y", "okropny", "fatalny", "straszny", "najgorszy", "nienawidzÄ™",
+    "sĹ‚aby", "rozczarowany", "bezuĹĽyteczny", "uszkodzony", "nudny",
     "beznadziejny", "tragiczny", "niezadowolony", "kiepski", "marny",
-    "skandaliczny", "żałosny", "fatalnie", "okropnie",
+    "skandaliczny", "ĹĽaĹ‚osny", "fatalnie", "okropnie",
 }
 _ALL_POS = _POS_EN | _POS_PL
 _ALL_NEG = _NEG_EN | _NEG_PL
@@ -60,7 +60,7 @@ def predict_nb(text, dataset_name="imdb"):
     else:
         from sklearn.naive_bayes import MultinomialNB
         from sklearn.feature_extraction.text import TfidfVectorizer
-        from data_loader import load_dataset
+        from lab3.data_loader import load_dataset
 
         texts, labels, label_names = load_dataset(dataset_name)
         vec = TfidfVectorizer(max_features=10000)
@@ -89,7 +89,7 @@ def predict_rf(text, dataset_name="imdb"):
     else:
         from sklearn.ensemble import RandomForestClassifier
         from sklearn.feature_extraction.text import TfidfVectorizer
-        from data_loader import load_dataset
+        from lab3.data_loader import load_dataset
 
         texts, labels, label_names = load_dataset(dataset_name)
         vec = TfidfVectorizer(max_features=10000)
@@ -221,3 +221,4 @@ def predict_sentiment(method, text, dataset_name=None):
         return predict_neural(text, method, dataset_name)
     else:
         raise ValueError(f"Unknown method: {method}")
+

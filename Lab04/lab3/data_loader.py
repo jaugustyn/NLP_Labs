@@ -4,7 +4,7 @@ import csv
 import numpy as np
 import pandas as pd
 
-from config import CUSTOM_DATASET_FILE, CUSTOM_LABELS, LABEL_ALIASES, MAX_SAMPLES
+from lab3.config import CUSTOM_DATASET_FILE, CUSTOM_LABELS, LABEL_ALIASES, MAX_SAMPLES
 
 
 def load_dataset(name, max_samples=MAX_SAMPLES):

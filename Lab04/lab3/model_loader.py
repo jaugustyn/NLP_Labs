@@ -2,7 +2,7 @@ import os
 import glob
 import pickle
 
-from config import MODELS_DIR
+from lab3.config import MODELS_DIR
 
 
 def load_neural_model(model_type, dataset_name):

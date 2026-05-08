@@ -5,11 +5,11 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-from config import (
+from lab3.config import (
     MODELS_DIR, EMBEDDING_DIM, MAX_VOCAB_SIZE, BATCH_SIZE,
     EPOCHS, DEFAULT_MAX_LEN,
 )
-from preprocessing import clean_text, build_tokenizer, texts_to_padded
+from lab3.preprocessing import clean_text, build_tokenizer, texts_to_padded
 
 
 def _build_model(model_type, vocab_size, embedding_dim, max_len, num_classes):

@@ -6,17 +6,17 @@ from collections import Counter
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from config import (
+from lab3.config import (
     SENTIMENT_METHODS, NEURAL_MODELS, VALID_DATASETS,
     RESULTS_FILE, RESULTS_DIR, PLOTS_DIR, CUSTOM_LABELS,
     BINARY_LABEL_MAP, MODELS_DIR,
 )
-from utils import parse_params, extract_quoted_args, log_error, format_duration
-from data_loader import load_dataset, add_record, get_custom_stats
-from training import train_neural_model
-from model_loader import list_models, find_model_for_method
-from sentiment_methods import predict_sentiment
-import visualizations as viz
+from lab3.utils import parse_params, extract_quoted_args, log_error, format_duration
+from lab3.data_loader import load_dataset, add_record, get_custom_stats
+from lab3.training import train_neural_model
+from lab3.model_loader import list_models, find_model_for_method
+from lab3.sentiment_methods import predict_sentiment
+from lab3 import visualizations as viz
 
 from lab1 import data_manager, nlp_core
 from lab1 import visualizer as lab1_visualizer
@@ -439,9 +439,9 @@ def _handle_compare(bot, message):
 
 def _train_ml_if_needed(train_texts, train_labels, label_names, dataset_name):
     """Train and save NB + RF models for comparison if not already saved."""
-    from model_loader import load_sklearn_model, save_sklearn_model
+    from lab3.model_loader import load_sklearn_model, save_sklearn_model
     from sklearn.feature_extraction.text import TfidfVectorizer
-    from preprocessing import clean_text
+    from lab3.preprocessing import clean_text
 
     cleaned = [clean_text(t) for t in train_texts]
 

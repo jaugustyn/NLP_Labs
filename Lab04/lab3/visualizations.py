@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from config import PLOTS_DIR
+from lab3.config import PLOTS_DIR
 
 
 def _ensure_dir():
