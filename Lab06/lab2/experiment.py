@@ -1,13 +1,16 @@
-﻿import csv
-import os
-import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import accuracy_score, f1_score
+"""Experiment runner for Lab 2 text classification."""
 
-from lab2.dataset_loader import load_dataset, DATASET_QUERY_WORDS
-from lab2.text_embeddings import get_embedding, EMBEDDING_NAMES
-from lab2.models import get_model, get_grid_params, resolve_methods
+import csv
+import os
+
+import numpy as np
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import GridSearchCV, train_test_split
+
 from lab2 import visualizer as viz
+from lab2.dataset_loader import DATASET_QUERY_WORDS, load_dataset
+from lab2.models import get_grid_params, get_model, resolve_methods
+from lab2.text_embeddings import EMBEDDING_NAMES, get_embedding
 
 SEEDS = [42, 1337, 2137]
 
@@ -17,9 +20,13 @@ SIMILAR_WORDS_FILE = os.path.join(RESULTS_DIR, "lab2_similar_words.txt")
 FEATURE_IMPORTANCE_FILE = os.path.join(RESULTS_DIR, "lab2_feature_importance.txt")
 
 
-def run_experiment(dataset_name, method_str, gridsearch, n_runs,
-                   progress_callback=None):
-
+def run_experiment(
+    dataset_name,
+    method_str,
+    gridsearch,
+    n_runs,
+    progress_callback=None,
+):
     def progress(msg):
         if progress_callback:
             try:
@@ -55,7 +62,7 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
         if emb_name in ("word2vec", "glove"):
             word_vector_models[emb_name] = emb
         shape = X.shape if hasattr(X, "shape") else "?"
-        progress(f"  {emb_name} done ÔÇö shape {shape}")
+        progress(f"  {emb_name} done — shape {shape}")
 
     # 4. Run classification experiments
     results = []
@@ -68,7 +75,10 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
         last_seed = seeds[-1]
         idx = np.arange(len(texts))
         _, test_idx_viz = train_test_split(
-            idx, test_size=0.2, random_state=last_seed, stratify=labels,
+            idx,
+            test_size=0.2,
+            random_state=last_seed,
+            stratify=labels,
         )
         X_test_viz = X_all[test_idx_viz]
         y_test_viz = labels[test_idx_viz]
@@ -78,7 +88,10 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
             X_2d, y_sub = viz.reduce_for_visualization(X_test_viz, y_test_viz, vm)
             for model_name in method_names:
                 viz.plot_embedding_2d(
-                    X_2d, y_sub, label_names, vm,
+                    X_2d,
+                    y_sub,
+                    label_names,
+                    vm,
                     f"{dataset_name}_{model_name}_{emb_name}_{vm}_embedding.png",
                 )
         progress(f"  Embedding visualisations for {emb_name} done.")
@@ -92,7 +105,10 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
             for seed in seeds:
                 indices = np.arange(len(texts))
                 train_idx, test_idx = train_test_split(
-                    indices, test_size=0.2, random_state=seed, stratify=labels,
+                    indices,
+                    test_size=0.2,
+                    random_state=seed,
+                    stratify=labels,
                 )
                 X_train, X_test = X_all[train_idx], X_all[test_idx]
                 y_train = labels[train_idx]
@@ -104,8 +120,11 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
                     params = get_grid_params(model_name, emb_name)
                     if params:
                         gs = GridSearchCV(
-                            model, params, cv=3,
-                            scoring="f1_macro", n_jobs=-1,
+                            model,
+                            params,
+                            cv=3,
+                            scoring="f1_macro",
+                            n_jobs=-1,
                             error_score="raise",
                         )
                         gs.fit(X_train, y_train)
@@ -182,9 +201,13 @@ def run_experiment(dataset_name, method_str, gridsearch, n_runs,
 def save_results_csv(results):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(RESULTS_FILE, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["embedding", "model", "accuracy", "macro_f1", "seed"])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["embedding", "model", "accuracy", "macro_f1", "seed"],
+        )
         writer.writeheader()
         writer.writerows(results)
+
 
 def format_summary(results, n_runs):
     lines = ["=== EXPERIMENT RESULTS ===\n"]
@@ -197,7 +220,10 @@ def format_summary(results, n_runs):
     for (emb, mdl), rows in combos.items():
         avg_acc = np.mean([r["accuracy"] for r in rows])
         avg_f1 = np.mean([r["macro_f1"] for r in rows])
-        lines.append(f"{emb:>10} + {mdl:<8}  acc={avg_acc:.4f}  f1={avg_f1:.4f}  (runs={len(rows)})")
+        lines.append(
+            f"{emb:>10} + {mdl:<8}  "
+            f"acc={avg_acc:.4f}  f1={avg_f1:.4f}  (runs={len(rows)})"
+        )
 
     lines.append(f"\nTotal experiments: {len(results)}")
     lines.append(f"Results CSV: {RESULTS_FILE}")
@@ -265,6 +291,7 @@ def extract_feature_importance(model, embedding, model_name, emb_name, label_nam
 
     return "\n".join(lines)
 
+
 def save_feature_importance_file(blocks):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(FEATURE_IMPORTANCE_FILE, "w", encoding="utf-8") as f:
@@ -272,6 +299,7 @@ def save_feature_importance_file(blocks):
         f.write("=" * 50 + "\n")
         for block in blocks:
             f.write(block + "\n")
+
 
 def save_similar_words(word_vector_models, dataset_name):
     query_words = DATASET_QUERY_WORDS.get(dataset_name, ["good", "bad", "great"])

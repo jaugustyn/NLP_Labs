@@ -1,9 +1,11 @@
+"""Plotting helpers for Lab 3 sentiment experiments."""
+
 import os
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sns
 
 from lab3.config import PLOTS_DIR
@@ -80,8 +82,14 @@ def plot_comparison(results_df, dataset_name):
         ax.set_ylim(0, 1.05)
         ax.tick_params(axis="x", rotation=45)
         for bar, val in zip(bars, data[metric]):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                    f"{val:.3f}", ha="center", va="bottom", fontsize=8)
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + 0.01,
+                f"{val:.3f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
         ax.grid(axis="y", alpha=0.3)
 
     plt.suptitle(f"Method Comparison — {dataset_name}", fontsize=14)
@@ -101,7 +109,10 @@ def plot_wordcloud(texts, label, dataset_name):
         return None
     try:
         wc = WordCloud(
-            width=800, height=400, background_color="white", min_word_length=3,
+            width=800,
+            height=400,
+            background_color="white",
+            min_word_length=3,
         ).generate(all_text)
     except ValueError:
         return None
@@ -126,8 +137,13 @@ def plot_class_distribution(label_counts, dataset_name):
     colors = sns.color_palette("pastel", len(labels))
     bars = plt.bar(labels, counts, color=colors)
     for bar, c in zip(bars, counts):
-        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                 str(c), ha="center", va="bottom")
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.5,
+            str(c),
+            ha="center",
+            va="bottom",
+        )
     plt.title(f"Class Distribution — {dataset_name}")
     plt.ylabel("Count")
     plt.grid(axis="y", alpha=0.3)

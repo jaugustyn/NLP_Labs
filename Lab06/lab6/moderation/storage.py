@@ -5,7 +5,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime
 
-from config import MODERATION_DATA_DIR
+from lab6.config import MODERATION_DATA_DIR
 
 
 MODERATION_LOG = os.path.join(MODERATION_DATA_DIR, "moderation_log.csv")
@@ -16,28 +16,57 @@ ACTION_LOG = os.path.join(MODERATION_DATA_DIR, "moderation_actions.csv")
 WATCHLIST = os.path.join(MODERATION_DATA_DIR, "watchlist.csv")
 
 MODERATION_FIELDS = [
-    "timestamp", "content_id", "user_id", "username", "text",
-    "model_bielik_decision", "model_bielik_score",
-    "model_qwen_decision", "model_qwen_score", "pii_detected",
-    "sentiment", "action", "moderator_override", "reason",
-    "appeal_filed", "categories", "risk_level", "consensus",
+    "timestamp",
+    "content_id",
+    "user_id",
+    "username",
+    "text",
+    "model_bielik_decision",
+    "model_bielik_score",
+    "model_qwen_decision",
+    "model_qwen_score",
+    "pii_detected",
+    "sentiment",
+    "action",
+    "moderator_override",
+    "reason",
+    "appeal_filed",
+    "categories",
+    "risk_level",
+    "consensus",
 ]
 USER_FIELDS = [
-    "user_id", "username", "total_violations", "last_violation_date",
-    "categories", "risk_score", "is_repeat_offender", "shadow_bans",
+    "user_id",
+    "username",
+    "total_violations",
+    "last_violation_date",
+    "categories",
+    "risk_score",
+    "is_repeat_offender",
+    "shadow_bans",
     "appeals_filed",
 ]
 FEEDBACK_FIELDS = [
-    "content_id", "original_bot_decision", "moderator_override",
-    "text_sample", "category", "confidence_before", "confidence_after",
-    "comment", "timestamp",
+    "content_id",
+    "original_bot_decision",
+    "moderator_override",
+    "text_sample",
+    "category",
+    "confidence_before",
+    "confidence_after",
+    "comment",
+    "timestamp",
 ]
-TRAIN_FIELDS = [
-    "content_id", "text", "label", "category", "comment", "timestamp",
-]
+TRAIN_FIELDS = ["content_id", "text", "label", "category", "comment", "timestamp"]
 ACTION_FIELDS = [
-    "timestamp", "content_id", "user_id", "action", "reason",
-    "moderator_id", "priority", "duration_hours",
+    "timestamp",
+    "content_id",
+    "user_id",
+    "action",
+    "reason",
+    "moderator_id",
+    "priority",
+    "duration_hours",
 ]
 WATCHLIST_FIELDS = ["timestamp", "user_id", "reason", "active"]
 
@@ -94,27 +123,42 @@ def get_moderation(content_id):
     return None
 
 
-def append_action(action, content_id="", user_id="", reason="",
-                  moderator_id="bot", priority="", duration_hours=""):
-    _append_row(ACTION_LOG, ACTION_FIELDS, {
-        "timestamp": now_iso(),
-        "content_id": content_id,
-        "user_id": user_id,
-        "action": action.upper(),
-        "reason": reason,
-        "moderator_id": moderator_id,
-        "priority": priority,
-        "duration_hours": duration_hours,
-    })
+def append_action(
+    action,
+    content_id="",
+    user_id="",
+    reason="",
+    moderator_id="bot",
+    priority="",
+    duration_hours="",
+):
+    _append_row(
+        ACTION_LOG,
+        ACTION_FIELDS,
+        {
+            "timestamp": now_iso(),
+            "content_id": content_id,
+            "user_id": user_id,
+            "action": action.upper(),
+            "reason": reason,
+            "moderator_id": moderator_id,
+            "priority": priority,
+            "duration_hours": duration_hours,
+        },
+    )
 
 
 def append_watchlist(user_id, reason):
-    _append_row(WATCHLIST, WATCHLIST_FIELDS, {
-        "timestamp": now_iso(),
-        "user_id": user_id,
-        "reason": reason,
-        "active": "True",
-    })
+    _append_row(
+        WATCHLIST,
+        WATCHLIST_FIELDS,
+        {
+            "timestamp": now_iso(),
+            "user_id": user_id,
+            "reason": reason,
+            "active": "True",
+        },
+    )
 
 
 def list_watchlist():
@@ -135,14 +179,18 @@ def append_feedback(content_id, moderator_override, comment=""):
         "timestamp": now_iso(),
     }
     _append_row(FEEDBACK_LOG, FEEDBACK_FIELDS, row)
-    _append_row(TRAIN_DATA, TRAIN_FIELDS, {
-        "content_id": content_id,
-        "text": original.get("text", ""),
-        "label": moderator_override.upper(),
-        "category": original.get("categories", ""),
-        "comment": comment,
-        "timestamp": row["timestamp"],
-    })
+    _append_row(
+        TRAIN_DATA,
+        TRAIN_FIELDS,
+        {
+            "content_id": content_id,
+            "text": original.get("text", ""),
+            "label": moderator_override.upper(),
+            "category": original.get("categories", ""),
+            "comment": comment,
+            "timestamp": row["timestamp"],
+        },
+    )
     return row
 
 
@@ -192,7 +240,8 @@ def user_history(user_id):
 def rebuild_user_history():
     rows = _read_rows(MODERATION_LOG)
     shadow_bans = Counter(
-        r.get("user_id") for r in _read_rows(ACTION_LOG)
+        r.get("user_id")
+        for r in _read_rows(ACTION_LOG)
         if r.get("action") == "SHADOW_BAN"
     )
     grouped = defaultdict(list)
@@ -202,8 +251,7 @@ def rebuild_user_history():
     out = []
     for user_id, items in grouped.items():
         violations = [
-            r for r in items
-            if r.get("action") in ("REJECT", "SHADOW_BAN")
+            r for r in items if r.get("action") in ("REJECT", "SHADOW_BAN")
         ]
         cats = Counter()
         for item in violations:
@@ -213,19 +261,23 @@ def rebuild_user_history():
         total = len(violations)
         risk = min(1.0, total / 5.0 + shadow_bans[user_id] * 0.15)
         last = max((v.get("timestamp") for v in violations), default="")
-        username = next((r.get("username") for r in reversed(items)
-                         if r.get("username")), "")
-        out.append({
-            "user_id": user_id,
-            "username": username,
-            "total_violations": total,
-            "last_violation_date": last,
-            "categories": ";".join(sorted(cats)),
-            "risk_score": round(risk, 4),
-            "is_repeat_offender": total >= 3,
-            "shadow_bans": shadow_bans[user_id],
-            "appeals_filed": 0,
-        })
+        username = next(
+            (r.get("username") for r in reversed(items) if r.get("username")),
+            "",
+        )
+        out.append(
+            {
+                "user_id": user_id,
+                "username": username,
+                "total_violations": total,
+                "last_violation_date": last,
+                "categories": ";".join(sorted(cats)),
+                "risk_score": round(risk, 4),
+                "is_repeat_offender": total >= 3,
+                "shadow_bans": shadow_bans[user_id],
+                "appeals_filed": 0,
+            }
+        )
     _rewrite_rows(USER_HISTORY, USER_FIELDS, out)
 
 
@@ -238,13 +290,15 @@ def find_similar(text, limit=5):
             continue
         score = len(words & other) / max(1, len(words | other))
         if score > 0:
-            hits.append({
-                "content_id": row.get("content_id"),
-                "action": row.get("action"),
-                "reason": row.get("reason"),
-                "score": round(score, 4),
-                "text": (row.get("text") or "")[:160],
-            })
+            hits.append(
+                {
+                    "content_id": row.get("content_id"),
+                    "action": row.get("action"),
+                    "reason": row.get("reason"),
+                    "score": round(score, 4),
+                    "text": (row.get("text") or "")[:160],
+                }
+            )
     hits.sort(key=lambda item: item["score"], reverse=True)
     return hits[:max(1, min(int(limit or 5), 20))]
 

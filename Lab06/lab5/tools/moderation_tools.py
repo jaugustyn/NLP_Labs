@@ -1,5 +1,5 @@
 """Function-calling wrappers for Lab06 moderation actions."""
-from moderation import actions
+from lab6.moderation import actions
 
 
 def _schema(name, description, properties, required):

@@ -1,6 +1,9 @@
+"""Small text classifier used by Lab 1 commands."""
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
+
 from lab1 import data_manager
 
 CLASS_TO_LABEL = {
@@ -10,6 +13,7 @@ CLASS_TO_LABEL = {
 }
 
 LABEL_TO_CLASS = {value: key for key, value in CLASS_TO_LABEL.items()}
+
 
 def train_and_predict(new_text):
     records = data_manager.load_records()
@@ -33,12 +37,17 @@ def train_and_predict(new_text):
         labels.append(CLASS_TO_LABEL[label])
 
     if len(set(labels)) < 2:
-        return "Too few unique classes in dataset (at least 2 required). Add more examples with a different class."
+        return (
+            "Too few unique classes in dataset (at least 2 required). "
+            "Add more examples with a different class."
+        )
 
-    model = Pipeline([
-        ("vectorizer", CountVectorizer()),
-        ("classifier", LogisticRegression(max_iter=1000))
-    ])
+    model = Pipeline(
+        [
+            ("vectorizer", CountVectorizer()),
+            ("classifier", LogisticRegression(max_iter=1000)),
+        ]
+    )
 
     model.fit(texts, labels)
 

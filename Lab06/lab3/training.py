@@ -1,21 +1,33 @@
+"""Training utilities for Lab 3 neural sentiment models."""
+
 import os
-import time
 import pickle
-import numpy as np
+import time
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from lab3.config import (
-    MODELS_DIR, EMBEDDING_DIM, MAX_VOCAB_SIZE, BATCH_SIZE,
-    EPOCHS, DEFAULT_MAX_LEN,
+    BATCH_SIZE,
+    DEFAULT_MAX_LEN,
+    EMBEDDING_DIM,
+    EPOCHS,
+    MAX_VOCAB_SIZE,
+    MODELS_DIR,
 )
-from lab3.preprocessing import clean_text, build_tokenizer, texts_to_padded
+from lab3.preprocessing import build_tokenizer, clean_text, texts_to_padded
 
 
 def _build_model(model_type, vocab_size, embedding_dim, max_len, num_classes):
     from tensorflow.keras.models import Sequential
+
     from tensorflow.keras.layers import (
-        Embedding, SimpleRNN, LSTM, GRU, Dense, Dropout,
+        Dense,
+        Dropout,
+        Embedding,
+        GRU,
+        LSTM,
+        SimpleRNN,
     )
 
     rnn_layers = {"simplernn": SimpleRNN, "lstm": LSTM, "gru": GRU}
@@ -31,18 +43,31 @@ def _build_model(model_type, vocab_size, embedding_dim, max_len, num_classes):
 
     if num_classes == 2:
         model.add(Dense(1, activation="sigmoid"))
-        model.compile(optimizer="adam", loss="binary_crossentropy",
-                      metrics=["accuracy"])
+        model.compile(
+            optimizer="adam",
+            loss="binary_crossentropy",
+            metrics=["accuracy"],
+        )
     else:
         model.add(Dense(num_classes, activation="softmax"))
-        model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
-                      metrics=["accuracy"])
+        model.compile(
+            optimizer="adam",
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"],
+        )
 
     return model
 
 
-def train_neural_model(model_type, dataset_name, texts, labels, label_names,
-                       max_len=DEFAULT_MAX_LEN, progress_callback=None):
+def train_neural_model(
+    model_type,
+    dataset_name,
+    texts,
+    labels,
+    label_names,
+    max_len=DEFAULT_MAX_LEN,
+    progress_callback=None,
+):
     """Train a neural model and save all artifacts. Returns result dict."""
 
     os.makedirs(MODELS_DIR, exist_ok=True)
@@ -77,7 +102,11 @@ def train_neural_model(model_type, dataset_name, texts, labels, label_names,
 
     # Split
     X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y,
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y,
     )
 
     # Build
@@ -85,8 +114,13 @@ def train_neural_model(model_type, dataset_name, texts, labels, label_names,
         f"Building {model_type.upper()} "
         f"(max_len={max_len}, vocab={vocab_size}, classes={num_classes})..."
     )
-    model = _build_model(model_type, vocab_size, EMBEDDING_DIM, max_len,
-                         num_classes)
+    model = _build_model(
+        model_type,
+        vocab_size,
+        EMBEDDING_DIM,
+        max_len,
+        num_classes,
+    )
 
     # Train
     progress(f"Training for {EPOCHS} epochs...")
@@ -132,8 +166,7 @@ def train_neural_model(model_type, dataset_name, texts, labels, label_names,
     return result
 
 
-def _save_artifacts(prefix, model, tokenizer, label_encoder, max_len,
-                    num_classes):
+def _save_artifacts(prefix, model, tokenizer, label_encoder, max_len, num_classes):
     """Save model .h5, tokenizer .pkl, label_encoder .pkl, meta .pkl."""
     model_path = os.path.join(MODELS_DIR, f"{prefix}.h5")
     tok_path = os.path.join(MODELS_DIR, f"{prefix}_tokenizer.pkl")

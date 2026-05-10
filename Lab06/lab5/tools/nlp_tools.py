@@ -1,11 +1,9 @@
-"""Bonus NLP tool — exposes Lab 1-4 capabilities (translate, summarize,
-extract entities, classify sentiment) to the agent so it can chain
-them with the other tools (web_search → summarize, vision → translate,
-etc.)."""
+"""Expose Lab 1-4 NLP capabilities as a Lab 5 agent tool."""
+
 import re
 import unicodedata
 
-from lab4 import language_detect, ner, translation, summarization
+from lab4 import language_detect, ner, summarization, translation
 
 
 _OPS = ("translate", "summarize", "extract_entities", "classify_sentiment")
@@ -62,12 +60,28 @@ def _resolve_lang(text, lang):
 
 
 def _fold(text):
-    text = (text or "").translate(str.maketrans({
-        "ą": "a", "ć": "c", "ę": "e", "ł": "l", "ń": "n",
-        "ó": "o", "ś": "s", "ź": "z", "ż": "z",
-        "Ą": "A", "Ć": "C", "Ę": "E", "Ł": "L", "Ń": "N",
-        "Ó": "O", "Ś": "S", "Ź": "Z", "Ż": "Z",
-    }))
+    text = (text or "").translate(
+        str.maketrans({
+            "ą": "a",
+            "ć": "c",
+            "ę": "e",
+            "ł": "l",
+            "ń": "n",
+            "ó": "o",
+            "ś": "s",
+            "ź": "z",
+            "ż": "z",
+            "Ą": "A",
+            "Ć": "C",
+            "Ę": "E",
+            "Ł": "L",
+            "Ń": "N",
+            "Ó": "O",
+            "Ś": "S",
+            "Ź": "Z",
+            "Ż": "Z",
+        })
+    )
     text = unicodedata.normalize("NFKD", text)
     return "".join(ch for ch in text if not unicodedata.combining(ch)).lower()
 
@@ -82,15 +96,34 @@ def _term_score(token):
     if token in _NEGATIVE_TERMS:
         return -1.0
     # Polish inflection fallback: keep this stem-based and generic.
-    if any(token.startswith(stem) for stem in (
-        "swietn", "doskonal", "wspanial", "fantastycz", "genialn",
-        "rewelacyj", "znakomit", "idealn",
-    )):
+    if any(
+        token.startswith(stem)
+        for stem in (
+            "swietn",
+            "doskonal",
+            "wspanial",
+            "fantastycz",
+            "genialn",
+            "rewelacyj",
+            "znakomit",
+            "idealn",
+        )
+    ):
         return 1.0
-    if any(token.startswith(stem) for stem in (
-        "fataln", "okropn", "straszn", "beznadziej", "tragiczn",
-        "kiepsk", "glup", "nudn", "rozczarow",
-    )):
+    if any(
+        token.startswith(stem)
+        for stem in (
+            "fataln",
+            "okropn",
+            "straszn",
+            "beznadziej",
+            "tragiczn",
+            "kiepsk",
+            "glup",
+            "nudn",
+            "rozczarow",
+        )
+    ):
         return -1.0
     return 0.0
 
@@ -130,12 +163,22 @@ def _classify_sentiment_rule(text):
     return ("pozytywny" if score > 0 else "negatywny"), confidence
 
 
-def nlp_tools(operation, text, language="auto", target_language=None,
-              summary_type="abstractive", length="short"):
+def nlp_tools(
+    operation,
+    text,
+    language="auto",
+    target_language=None,
+    summary_type="abstractive",
+    length="short",
+):
     """Run one Lab 1-4 NLP operation."""
     if operation not in _OPS:
-        return {"error": f"Unknown operation: {operation}. "
-                         f"Allowed: {list(_OPS)}"}
+        return {
+            "error": (
+                f"Unknown operation: {operation}. "
+                f"Allowed: {list(_OPS)}"
+            )
+        }
     if not isinstance(text, str) or not text.strip():
         return {"error": "text is required."}
 
@@ -143,22 +186,37 @@ def nlp_tools(operation, text, language="auto", target_language=None,
         src = _resolve_lang(text, language)
         tgt = (target_language or "en").lower()
         if src == tgt:
-            return {"operation": "translate", "src": src, "tgt": tgt,
-                    "translation": text, "note": "src == tgt, no-op"}
+            return {
+                "operation": "translate",
+                "src": src,
+                "tgt": tgt,
+                "translation": text,
+                "note": "src == tgt, no-op",
+            }
         try:
             out = translation.translate(text, src, tgt)
-            return {"operation": "translate", "src": src, "tgt": tgt,
-                    "translation": out}
+            return {
+                "operation": "translate",
+                "src": src,
+                "tgt": tgt,
+                "translation": out,
+            }
         except Exception as e:
             return {"operation": "translate", "error": str(e)}
 
     if operation == "summarize":
         try:
             out = summarization.summarize(
-                text, kind=summary_type, length=length,
+                text,
+                kind=summary_type,
+                length=length,
             )
-            return {"operation": "summarize", "type": summary_type,
-                    "length": length, "summary": out}
+            return {
+                "operation": "summarize",
+                "type": summary_type,
+                "length": length,
+                "summary": out,
+            }
         except Exception as e:
             return {"operation": "summarize", "error": str(e)}
 
@@ -181,8 +239,12 @@ def nlp_tools(operation, text, language="auto", target_language=None,
     if operation == "classify_sentiment":
         try:
             label, conf = _classify_sentiment_rule(text)
-            return {"operation": "classify_sentiment", "method": "rule_v2",
-                    "label": label, "confidence": float(conf)}
+            return {
+                "operation": "classify_sentiment",
+                "method": "rule_v2",
+                "label": label,
+                "confidence": float(conf),
+            }
         except Exception as e:
             return {"operation": "classify_sentiment", "error": str(e)}
 

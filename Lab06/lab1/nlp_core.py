@@ -1,5 +1,7 @@
-import string
+"""Core text preprocessing helpers for Lab 1."""
+
 import os
+import string
 from collections import Counter
 
 import nltk
@@ -7,19 +9,47 @@ import spacy
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 _NLP = None
+_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-STEM_SUFFIXES = sorted([
-    "owego","owej","owym","owie",
-    "anie","enie","aniu","eniu",
-    "ami","ach","ego","emu","owi",
-    "owa","owe","ych","ymi",
-    "nia","nie","cie",
-    "ów","om","ie",
-    "ą","ę","a","e","i","y","u"
-], key=len, reverse=True)
+STEM_SUFFIXES = sorted(
+    [
+        "owego",
+        "owej",
+        "owym",
+        "owie",
+        "anie",
+        "enie",
+        "aniu",
+        "eniu",
+        "ami",
+        "ach",
+        "ego",
+        "emu",
+        "owi",
+        "owa",
+        "owe",
+        "ych",
+        "ymi",
+        "nia",
+        "nie",
+        "cie",
+        "ów",
+        "om",
+        "ie",
+        "ą",
+        "ę",
+        "a",
+        "e",
+        "i",
+        "y",
+        "u",
+    ],
+    key=len,
+    reverse=True,
+)
 
 PUNCT = set(string.punctuation)
+
 
 def get_nlp():
     global _NLP
@@ -31,8 +61,6 @@ def get_nlp():
             _NLP = spacy.blank("pl")
     return _NLP
 
-
-_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_stopwords():
     filepath = os.path.join(_DIR, "stopwords-pl.txt")
@@ -119,13 +147,12 @@ def run_task(task_name, text):
 
     if task_name == "remove_stopwords":
         return tokens
-    elif task_name == "lemmatize":
+    if task_name == "lemmatize":
         return lemmatize(text)
-    elif task_name == "stemming":
+    if task_name == "stemming":
         return stemming(tokens)
-    elif task_name == "stats":
+    if task_name == "stats":
         return get_stats(tokens)
-    elif task_name == "n-grams":
+    if task_name == "n-grams":
         return get_ngrams(tokens, 2)
-    else:
-        return None
+    return None

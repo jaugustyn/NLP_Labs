@@ -63,7 +63,7 @@ NER context, moderation actions, feedback logging and analytics.
 
 ### Moderation pipeline
 
-`moderation.pipeline.moderate_content(text, user_id, username)` runs:
+`lab6.moderation.pipeline.moderate_content(text, user_id, username)` runs:
 
 1. `detect_private_info()` — local PII detector compatible with the
    `openai/privacy-filter` interface.
@@ -97,7 +97,7 @@ offline and remains testable on a small machine.
 ### Offline smoke test
 
 ```bash
-python _smoke_moderation.py
+python -m lab6._smoke_moderation
 ```
 
 ### Lab 4 (Inherited)
@@ -216,14 +216,18 @@ iterations.
 ```
 Lab06/
 ├── bot.py                 — Entry point (Telegram polling)
-├── commands.py            — Lab 6 handlers + Lab 5 agent + Lab 1-4 delegation
-├── config.py              — Configuration & constants (Lab 5/6)
+├── commands.py            — thin wrapper around lab6.commands
+├── config.py              — shared compatibility config for Lab 1-5
 ├── utils.py               — Parsing, formatting, logging, truncation
-├── moderation/
-│   ├── models.py          — PII, guard, sentiment and entity adapters
-│   ├── pipeline.py        — Multi-stage moderation decision flow
-│   ├── actions.py         — Moderation action tools
-│   └── storage.py         — CSV logs and analytics
+├── lab6/
+│   ├── commands.py        — Lab 6 handlers + Lab 5 agent + Lab 1-4 delegation
+│   ├── config.py          — Lab 6 moderation config
+│   ├── _smoke_moderation.py
+│   └── moderation/
+│       ├── models.py      — PII, guard, sentiment and entity adapters
+│       ├── pipeline.py    — Multi-stage moderation decision flow
+│       ├── actions.py     — Moderation action tools
+│       └── storage.py     — CSV logs and analytics
 ├── lab5/
 │   ├── agent.py           — Multi-step tool-calling loop
 │   ├── ollama_client.py   — Ollama /api/chat wrapper (tools + images)

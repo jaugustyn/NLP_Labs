@@ -313,7 +313,10 @@ SCHEMA = {
                 },
                 "language": {
                     "type": "string",
-                    "description": "ISO 639-1 code for Wikipedia language (en, pl, ...). Defaults to 'en'.",
+                    "description": (
+                        "ISO 639-1 code for Wikipedia language "
+                        "(en, pl, ...). Defaults to 'en'."
+                    ),
                 },
             },
             "required": ["query"],

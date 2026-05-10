@@ -61,7 +61,10 @@ def plot_wordcloud_per_class(texts, labels, label_names):
 def reduce_dim(X, method, n_components=2):
     if issparse(X):
         if method == "svd":
-            return TruncatedSVD(n_components=n_components, random_state=42).fit_transform(X)
+            return TruncatedSVD(
+                n_components=n_components,
+                random_state=42,
+            ).fit_transform(X)
         n_pre = min(50, X.shape[1] - 1)
         X_dense = TruncatedSVD(n_components=n_pre, random_state=42).fit_transform(X)
     else:
@@ -70,13 +73,20 @@ def reduce_dim(X, method, n_components=2):
     if method == "pca":
         n = min(n_components, X_dense.shape[1], X_dense.shape[0])
         return PCA(n_components=n, random_state=42).fit_transform(X_dense)
-    elif method == "tsne":
+    if method == "tsne":
         if X_dense.shape[1] > 50:
             X_dense = PCA(n_components=50, random_state=42).fit_transform(X_dense)
         perp = min(30, X_dense.shape[0] - 1)
-        return TSNE(n_components=n_components, random_state=42, perplexity=max(2, perp)).fit_transform(X_dense)
-    elif method == "svd":
-        return TruncatedSVD(n_components=n_components, random_state=42).fit_transform(X_dense)
+        return TSNE(
+            n_components=n_components,
+            random_state=42,
+            perplexity=max(2, perp),
+        ).fit_transform(X_dense)
+    if method == "svd":
+        return TruncatedSVD(
+            n_components=n_components,
+            random_state=42,
+        ).fit_transform(X_dense)
     raise ValueError(f"Unknown reduction method: {method}")
 
 

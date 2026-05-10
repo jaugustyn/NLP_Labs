@@ -1,3 +1,5 @@
+"""Shared command parsing and formatting helpers."""
+
 import re
 import traceback
 

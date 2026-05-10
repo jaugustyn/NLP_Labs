@@ -247,9 +247,15 @@ def _format_web_fact_answer(user_text, tool_trace):
 def _format_image_answer(user_text, tool_trace):
     if not _is_image_request(user_text):
         return None
-    results = [r for r in _tool_results(tool_trace, "analyze_image") if not r.get("error")]
+    results = [
+        r for r in _tool_results(tool_trace, "analyze_image")
+        if not r.get("error")
+    ]
     if not results:
-        errors = [r.get("error") for r in _tool_results(tool_trace, "analyze_image") if r.get("error")]
+        errors = [
+            r.get("error") for r in _tool_results(tool_trace, "analyze_image")
+            if r.get("error")
+        ]
         return errors[-1] if errors else None
     description = (results[-1].get("description") or "").strip()
     return description if description else None

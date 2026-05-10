@@ -2,8 +2,8 @@
 import json
 import uuid
 
-from moderation.pipeline import moderate_content, policy_check
-from moderation import actions, storage
+from lab6.moderation.pipeline import moderate_content, policy_check
+from lab6.moderation import actions, storage
 
 RUN = uuid.uuid4().hex[:8]
 

@@ -114,5 +114,8 @@ def train_on_feedback():
         "feedback_examples": feedback_count,
         "training_examples": train_count,
         "train_data_path": storage.TRAIN_DATA,
-        "note": "Feedback saved to train_data.csv; local fine-tuning is intentionally not run automatically.",
+        "note": (
+            "Feedback saved to train_data.csv; local fine-tuning is "
+            "intentionally not run automatically."
+        ),
     }

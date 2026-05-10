@@ -1,4 +1,7 @@
+"""Telegram entrypoint for the Lab06 bot."""
+
 import os
+
 import telebot
 from dotenv import load_dotenv
 

@@ -1,3 +1,5 @@
+"""Shared configuration used by Lab06 and inherited lab packages."""
+
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,12 +35,18 @@ TRANSLATION_MODEL_OVERRIDES = {
     ("en", "pl"): ("Helsinki-NLP/opus-mt-en-sla", ">>pol<<"),
 }
 SUPPORTED_TRANSLATION_PAIRS = [
-    ("en", "pl"), ("pl", "en"),
-    ("en", "de"), ("de", "en"),
-    ("en", "fr"), ("fr", "en"),
-    ("en", "es"), ("es", "en"),
-    ("pl", "de"), ("de", "pl"),
-    ("pl", "fr"), ("fr", "pl"),
+    ("en", "pl"),
+    ("pl", "en"),
+    ("en", "de"),
+    ("de", "en"),
+    ("en", "fr"),
+    ("fr", "en"),
+    ("en", "es"),
+    ("es", "en"),
+    ("pl", "de"),
+    ("de", "pl"),
+    ("pl", "fr"),
+    ("fr", "pl"),
 ]
 
 # Ollama
@@ -99,11 +107,3 @@ DUCKDUCKGO_API_URL = "https://api.duckduckgo.com/"
 WEB_SEARCH_MAX_CHARS = 800
 LOCAL_KB_MAX_HITS = 5
 VISION_MAX_IMAGE_BYTES = 4 * 1024 * 1024  # 4 MB cap on inline base64 images
-
-
-# =====================================================================
-#  Lab 6 — Content Moderation
-# =====================================================================
-
-MODERATION_DATA_DIR = os.path.join(BASE_DIR, "moderation_data")
-MODERATION_DEFAULT_MODERATOR_ID = "bot"

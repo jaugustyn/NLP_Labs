@@ -1,28 +1,35 @@
+"""Telegram command handlers for Lab 1, Lab 2, and Lab 3."""
+
+from collections import Counter
 import os
 import threading
+
 import numpy as np
 import pandas as pd
-from collections import Counter
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.model_selection import train_test_split
 
-from lab3.config import (
-    SENTIMENT_METHODS, NEURAL_MODELS, VALID_DATASETS,
-    RESULTS_FILE, RESULTS_DIR, PLOTS_DIR, CUSTOM_LABELS,
-    BINARY_LABEL_MAP, MODELS_DIR,
-)
-from lab3.utils import parse_params, extract_quoted_args, log_error, format_duration
-from lab3.data_loader import load_dataset, add_record, get_custom_stats
-from lab3.training import train_neural_model
-from lab3.model_loader import list_models, find_model_for_method
-from lab3.sentiment_methods import predict_sentiment
-from lab3 import visualizations as viz
-
+from lab1 import classifier
 from lab1 import data_manager, nlp_core
 from lab1 import visualizer as lab1_visualizer
-from lab1 import classifier
 from lab2.experiment import run_experiment as run_lab2_experiment
 from lab2 import visualizer as lab2_visualizer
+from lab3 import visualizations as viz
+from lab3.config import (
+    BINARY_LABEL_MAP,
+    CUSTOM_LABELS,
+    MODELS_DIR,
+    NEURAL_MODELS,
+    RESULTS_DIR,
+    RESULTS_FILE,
+    SENTIMENT_METHODS,
+    VALID_DATASETS,
+)
+from lab3.data_loader import add_record, get_custom_stats, load_dataset
+from lab3.model_loader import find_model_for_method, list_models
+from lab3.sentiment_methods import predict_sentiment
+from lab3.training import train_neural_model
+from lab3.utils import extract_quoted_args, format_duration, log_error, parse_params
 
 
 def register_handlers(bot):
