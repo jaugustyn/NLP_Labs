@@ -1,0 +1,446 @@
+[
+  {
+    "text": "To był bardzo interesujący wykład.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "To jest mój ulubiony, chociaż stary telefon do zadań",
+    "class": "pozytywny"
+  },
+  {
+    "text": "To jest świetna, wspaniała i bardzo duża chmura wyrazów",
+    "class": "pozytywny"
+  },
+  {
+    "text": "System działa szybko, ale interfejs wymaga poprawy.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Aplikacja działa bardzo płynnie i jest przyjemna w użyciu.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Ten film był nudny i zdecydowanie za długi.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Dokument został zapisany poprawnie.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Jestem bardzo zadowolony z jakości wykonania.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Program często się zawiesza i działa bardzo wolno.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Produkt dotarł na czas.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Obsługa klienta była niezwykle pomocna i uprzejma.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Nie podoba mi się nowy wygląd strony.",
+    "class": "negatywny"
+  },
+  {
+    "text": "To rozwiązanie jest całkiem wygodne.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Instrukcja jest dostępna w dokumentacji.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Jakość dźwięku jest bardzo słaba.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Naprawdę świetna robota, wszystko działa idealnie.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Nie zauważyłem większych zmian w nowej wersji.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Ten produkt jest kompletnie bezużyteczny.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Interfejs jest przejrzysty i łatwy do zrozumienia.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Aplikacja uruchamia się poprawnie.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Aktualizacja spowodowała więcej problemów niż korzyści.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Bardzo podoba mi się nowy design aplikacji.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Zadanie zostało wykonane zgodnie z instrukcją.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Serwer często przestaje odpowiadać.",
+    "class": "negatywny"
+  },
+  {
+    "text": "To jedno z najlepszych narzędzi, jakich używałem.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Raport został wygenerowany automatycznie.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Interfejs jest brzydki i mało intuicyjny.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Jestem pod wrażeniem szybkości działania systemu.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Plik został zapisany w katalogu projektu.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To była strata czasu.",
+    "class": "negatywny"
+  },
+  {
+    "text": "That was a very interesting lecture.",
+    "class": "neutralny"
+  },
+  {
+    "text": "This is a great and very large word cloud",
+    "class": "pozytywny"
+  },
+  {
+    "text": "This is a great and very large word cloud great great",
+    "class": "pozytywny"
+  },
+  {
+    "text": "The system is fast, but the interface needs improvement.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Kod działał wczoraj idealnie i nic w nim nie zmieniałem.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Dzisiaj wszystko się psuje i absolutnie nie mam pojęcia dlaczego.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Wyniki analizy są dostępne w panelu sterowania.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To oprogramowanie to absolutna rewolucja w mojej pracy.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Bateria trzyma bardzo krótko, co jest niedopuszczalne.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Proces instalacji przebiegł bez żadnych komplikacji.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Jestem zachwycony poziomem wsparcia technicznego.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Cena jest zbyt wysoka w stosunku do oferowanych możliwości.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Parametry urządzenia odpowiadają specyfikacji producenta.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Design jest nowoczesny i przyciąga wzrok każdego.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Strona ładuje się w nieskończoność, tracę cierpliwość.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Ustawienia domyślne zostały przywrócone.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To była najlepsza decyzja zakupowa w tym roku.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Niestety, jakość materiałów pozostawia wiele do życzenia.",
+    "class": "negatywny"
+  },
+  {
+    "text": "The application sends notifications every hour.",
+    "class": "neutralny"
+  },
+  {
+    "text": "The user experience is flawless and very intuitive.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "I encountered several critical bugs during the first run.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Harmonogram spotkań został zaktualizowany w kalendarzu.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To rozwiązanie znacznie przewyższa konkurencyjne produkty.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Brak kompatybilności ze starszymi wersjami to duży problem.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Transfer danych odbywa się za pomocą protokołu szyfrowanego.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Polecam każdemu, kto szuka niezawodności i wydajności.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Większość funkcji działa bez zarzutu, lecz brakuje ciemnego motywu.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To oprogramowanie to absolutny przełom w mojej codziennej pracy.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Bateria rozładowuje się w mgnieniu oka, co jest niedopuszczalne.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Proces instalacji przebiegł zgodnie z instrukcją producenta.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Jestem pod ogromnym wrażeniem profesjonalizmu obsługi technicznej.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Cena urządzenia jest niewspółmiernie wysoka do jego możliwości.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Parametry techniczne są identyczne jak w poprzednim modelu.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Design jest nowoczesny i przyciąga wzrok każdego użytkownika.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Strona ładuje się zbyt wolno, co uniemożliwia normalną pracę.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Ustawienia fabryczne zostały przywrócone automatycznie.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To zdecydowanie najlepsza inwestycja, jaką poczyniłem w tym roku.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Jakość wykonania obudowy pozostawia bardzo wiele do życzenia.",
+    "class": "negatywny"
+  },
+  {
+    "text": "The application sends daily notifications to all registered users.",
+    "class": "neutralny"
+  },
+  {
+    "text": "The user experience is flawless and exceptionally intuitive.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "I encountered several critical bugs during the initial setup.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Harmonogram prac został opublikowany w wewnętrznej sieci.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To rozwiązanie technologiczne deklasuje całą konkurencję.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Brak wsparcia dla formatów PDF to ogromne niedociągnięcie.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Transfer danych odbywa się za pomocą bezpiecznego protokołu.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Polecam ten produkt każdemu, kto ceni niezawodność.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Aplikacja wymaga stałego połączenia z siecią internetową.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Interfejs jest toporny i przypomina programy sprzed dekady.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Szybkość ładowania bazy danych przerosła moje oczekiwania.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Aktualizacja jest dostępna do pobrania na stronie głównej.",
+    "class": "neutralny"
+  },
+  {
+    "text": "System operacyjny nie rozpoznaje podłączonego urządzenia.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Dzisiejsza pogoda jest umiarkowana, nie przewiduje się opadów.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Ten krem do rąk ma okropny zapach i w ogóle się nie wchłania.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Kolacja w tej restauracji była absolutnie wybitna, polecam steki.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Pociąg odjeżdża z peronu trzeciego o godzinie 14:15.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Pracownicy sklepu są nieuprzejmi i ignorują klientów.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Widok z szczytu góry zapiera dech w piersiach, warto było wejść.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Instrukcja montażu szafki znajduje się wewnątrz kartonu.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Nowa powieść tego autora jest wtórna i nudna od pierwszej strony.",
+    "class": "negatywny"
+  },
+  {
+    "text": "To auto prowadzi się niesamowicie lekko i komfortowo.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Skład materiałowy tej koszulki to sto procent bawełny.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Lekarz przeprowadził badanie bardzo dokładnie i wszystko wyjaśnił.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Mieszkanie jest w fatalnym stanie, wymaga natychmiastowego remontu.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Wystawa malarstwa współczesnego potrwa do końca przyszłego miesiąca.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Ten odkurzacz jest niesamowicie cichy i skuteczny.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Hotelowy basen był brudny i zdecydowanie za mały dla gości.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Przesyłka kurierska została pozostawiona u sąsiada.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Jestem zachwycony nowym modelem butów do biegania.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Film dokumentalny przedstawia fakty z życia znanych naukowców.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Poduszka jest zbyt twarda i rano zawsze boli mnie kark.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Dziękuję za szybką i rzetelną odpowiedź na moje zapytanie.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Spotkanie zespołu odbędzie się w sali konferencyjnej na piętrze.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Kawa w tym automacie smakuje jak pomyje.",
+    "class": "negatywny"
+  },
+  {
+    "text": "To miasto ma niesamowitą energię i piękną architekturę.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Zasady gry planszowej są opisane na odwrocie pudełka.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Meble dotarły porysowane i niezgodne z zamówieniem.",
+    "class": "negatywny"
+  },
+  {
+    "text": "Pytasz dzika, czy biega w lesie?",
+    "class": "neutralny"
+  },
+  {
+    "text": "Lubie lody",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Koty biegały po ogrodzie i łapały myszy",
+    "class": "neutralny"
+  },
+  {
+    "text": "To jest świetna i bardzo duża chmura wyrazów",
+    "class": "pozytywny"
+  },
+  {
+    "text": "To jest świetna i bardzo duża chmura wyrazów z bardzo pozytywnym wydźwiękiem",
+    "class": "pozytywny"
+  }
+]
