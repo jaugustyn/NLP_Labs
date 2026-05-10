@@ -3,6 +3,7 @@ mode, and direct invocations of each registered tool. Lab 1-4 commands
 are delegated to lab4_commands."""
 import json
 import os
+import re
 import tempfile
 
 from utils import parse_params, log_error, truncate
@@ -29,7 +30,7 @@ HELP_TEXT = (
     "  /tool_weather city=\"Warsaw\"\n"
     "  /tool_search query=\"OpenAI\" [language=en|pl]\n"
     "  /tool_local_kb query=\"Paris\"\n"
-    "  /tool_datetime [tz=Europe/Warsaw]\n"
+    "  /tool_datetime [city=Tokyo|tz=Europe/Warsaw]\n"
     "  /tool_nlp operation=<translate|summarize|extract_entities|"
     "classify_sentiment> text=\"...\" [target_language=...] [language=...]\n"
     "  /tool_vision  — send a photo with this caption\n\n"
@@ -96,11 +97,66 @@ def _download_photo(bot, message):
     return path
 
 
+def _message_text(message):
+    return (message.text or message.caption or "").strip()
+
+
+def _caption_command(message, command):
+    """Return True for photo captions like '/agent ...'.
+
+    pyTelegramBotAPI's built-in `commands=` filter only checks text
+    messages, so photo captions need an explicit predicate.
+    """
+    raw = _message_text(message)
+    if not raw.startswith("/"):
+        return False
+    token = raw.split(maxsplit=1)[0][1:]
+    token = token.split("@", 1)[0]
+    return token == command
+
+
+def _is_command_message(message):
+    return _message_text(message).startswith("/")
+
+
+def _extract_text_param(rest):
+    """Extract text=... robustly, including an unclosed quote."""
+    match = re.search(r"(?<!\w)text\s*=", rest or "", flags=re.IGNORECASE)
+    if not match:
+        return None
+    value = rest[match.end():].strip()
+    if not value:
+        return ""
+    if value[0] in ("\"", "'"):
+        quote = value[0]
+        end = value.find(quote, 1)
+        if end >= 0:
+            return value[1:end].strip()
+        return value[1:].strip()
+    next_param = re.search(r"\s+\w+\s*=", value)
+    if next_param:
+        return value[:next_param.start()].strip()
+    return value.strip()
+
+
+def _extract_agent_text(rest):
+    text = _extract_text_param(rest)
+    if text is not None:
+        return text
+    params = parse_params(rest)
+    return params.get("text") or rest.strip()
+
+
 def _run_agent(bot, message, user_text, history=None, extra_context=None):
     image_path = _download_photo(bot, message)
     images = [image_path] if image_path else None
     if image_path and extra_context is None:
-        extra_context = f"The user attached an image at: {image_path}"
+        extra_context = (
+            f"The user attached an image. Its local path is: {image_path}. "
+            f"To answer any question about that picture you MUST call "
+            f"the analyze_image tool with image_path='{image_path}'. "
+            f"Do not guess what the image contains."
+        )
     try:
         agent = Agent()
         result = agent.run(
@@ -137,12 +193,11 @@ def _format_agent_reply(result):
 # =====================================================================
 
 def _handle_agent(bot, message):
-    raw = (message.text or message.caption or "").strip()
+    raw = _message_text(message)
     # Strip the command itself
     parts = raw.split(maxsplit=1)
     rest = parts[1] if len(parts) > 1 else ""
-    params = parse_params(rest)
-    user_text = params.get("text") or rest.strip()
+    user_text = _extract_agent_text(rest)
     if not user_text and not message.photo:
         bot.reply_to(
             message,
@@ -243,7 +298,7 @@ def _handle_tools_list(bot, message):
     lines = ["Registered tools:", ""]
     for name, (_, schema) in sorted(tools_mod.TOOL_REGISTRY.items()):
         desc = schema.get("function", {}).get("description", "")
-        lines.append(f"• {name} — {truncate(desc, 140)}")
+        lines.append(f"- {name} — {truncate(desc, 140)}")
     bot.reply_to(message, "\n".join(lines))
 
 
@@ -305,6 +360,8 @@ def _handle_tool_datetime(bot, message):
     parts = (message.text or "").split(maxsplit=1)
     params = parse_params(parts[1] if len(parts) > 1 else "")
     args = {}
+    if params.get("city"):
+        args["city"] = params["city"]
     if params.get("tz"):
         args["tz"] = params["tz"]
     _direct_call(bot, message, "datetime_now", args)
@@ -363,6 +420,13 @@ def register_handlers(bot):
     def cmd_agent(message):
         _handle_agent(bot, message)
 
+    @bot.message_handler(
+        func=lambda m: _caption_command(m, "agent"),
+        content_types=["photo"],
+    )
+    def cmd_agent_photo(message):
+        _handle_agent(bot, message)
+
     @bot.message_handler(commands=["chat"])
     def cmd_chat(message):
         _handle_chat_toggle(bot, message)
@@ -403,7 +467,14 @@ def register_handlers(bot):
     def cmd_tool_nlp(message):
         _handle_tool_nlp(bot, message)
 
-    @bot.message_handler(commands=["tool_vision"], content_types=["photo"])
+    @bot.message_handler(commands=["tool_vision"])
+    def cmd_tool_vision_usage(message):
+        _handle_tool_vision(bot, message)
+
+    @bot.message_handler(
+        func=lambda m: _caption_command(m, "tool_vision"),
+        content_types=["photo"],
+    )
     def cmd_tool_vision(message):
         _handle_tool_vision(bot, message)
 
@@ -412,7 +483,7 @@ def register_handlers(bot):
     @bot.message_handler(
         func=lambda m: (
             _chat_mode.get(m.chat.id, False)
-            and not (m.text or "").startswith("/")
+            and not _is_command_message(m)
         ),
         content_types=["text", "photo"],
     )

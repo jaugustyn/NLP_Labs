@@ -1,4 +1,6 @@
 """Weather tool using Open-Meteo (no API key required)."""
+import re
+
 import requests
 
 from config import (
@@ -26,18 +28,90 @@ _WMO = {
 }
 
 
-def _geocode(city):
-    r = requests.get(
-        OPEN_METEO_GEOCODING_URL,
-        params={"name": city, "count": 1, "language": "en", "format": "json"},
-        headers=_HEADERS,
-        timeout=HTTP_TIMEOUT,
+def _fold(text):
+    return (
+        (text or "").lower()
+        .replace("ą", "a")
+        .replace("ć", "c")
+        .replace("ę", "e")
+        .replace("ł", "l")
+        .replace("ń", "n")
+        .replace("ó", "o")
+        .replace("ś", "s")
+        .replace("ź", "z")
+        .replace("ż", "z")
     )
-    r.raise_for_status()
-    results = r.json().get("results") or []
+
+
+def _city_candidates(city):
+    raw = re.sub(r"\s+", " ", (city or "").strip(" .,!?:;\"'()[]{}"))
+    if not raw:
+        return []
+    candidates = []
+
+    def add(value):
+        value = re.sub(r"\s+", " ", (value or "").strip())
+        if value and value not in candidates:
+            candidates.append(value)
+
+    add(raw)
+    folded = _fold(raw)
+    if folded != raw.lower():
+        add(folded)
+
+    lower = raw.lower()
+    transforms = []
+    if lower.endswith("awie"):
+        transforms.append(raw[:-4] + "awa")
+    if lower.endswith("owie"):
+        transforms.append(raw[:-2])
+    if lower.endswith("onie"):
+        transforms.extend([raw[:-2], raw[:-3] + "na"])
+    if lower.endswith("nie"):
+        transforms.append(raw[:-2])
+    if lower.endswith("ie"):
+        transforms.append(raw[:-2])
+    if lower.endswith("żu") or lower.endswith("zu"):
+        transforms.append(raw[:-1])
+    if lower.endswith("u") and len(raw) > 4:
+        transforms.append(raw[:-1])
+
+    for value in transforms:
+        add(value)
+        folded_value = _fold(value)
+        if folded_value != value.lower():
+            add(folded_value)
+
+    return candidates
+
+
+def _geocode(city):
+    results = []
+    for candidate in _city_candidates(city):
+        for language in ("pl", "en"):
+            r = requests.get(
+                OPEN_METEO_GEOCODING_URL,
+                params={
+                    "name": candidate,
+                    "count": 5,
+                    "language": language,
+                    "format": "json",
+                },
+                headers=_HEADERS,
+                timeout=HTTP_TIMEOUT,
+            )
+            r.raise_for_status()
+            results = r.json().get("results") or []
+            if results:
+                break
+        if results:
+            break
+
     if not results:
         return None
-    g = results[0]
+    # Prefer the most populous match — Open-Meteo returns small
+    # villages first for ambiguous Polish names like 'Paryż'.
+    g = max(results, key=lambda x: x.get("population") or 0)
     return {
         "name": g.get("name"),
         "country": g.get("country"),

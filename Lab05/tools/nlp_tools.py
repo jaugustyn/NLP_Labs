@@ -2,11 +2,53 @@
 extract entities, classify sentiment) to the agent so it can chain
 them with the other tools (web_search → summarize, vision → translate,
 etc.)."""
+import re
+import unicodedata
+
 from lab4 import language_detect, ner, translation, summarization
-from lab3.sentiment_methods import predict_rule
 
 
 _OPS = ("translate", "summarize", "extract_entities", "classify_sentiment")
+
+_NEGATORS = {"nie", "not", "no", "never", "nigdy"}
+_INTENSIFIERS = {
+    "bardzo", "mega", "super", "strasznie", "okropnie", "wyjatkowo",
+    "naprawde", "really", "very", "extremely", "absolutely",
+    "niesamowicie",
+}
+_POSITIVE_TERMS = {
+    "polecam", "polecic", "dobry", "dobra", "dobre", "swietny",
+    "swietna", "swietne", "super", "doskonaly", "doskonala",
+    "wspanialy", "wspaniala", "fantastyczny", "fantastyczna",
+    "genialny", "genialna", "rewelacyjny", "rewelacyjna", "idealny",
+    "idealna", "znakomity", "znakomita", "kocham", "uwielbiam",
+    "good", "great", "excellent", "amazing", "wonderful", "fantastic",
+    "love", "best", "awesome", "perfect", "recommend", "brilliant",
+}
+_NEGATIVE_TERMS = {
+    "niepolecam", "odradzam", "zly", "zla", "zle", "slaby", "slaba",
+    "slabe", "fatalny", "fatalna", "fatalne", "okropny", "okropna",
+    "okropne", "straszny", "straszna", "straszne", "najgorszy",
+    "najgorsza", "beznadziejny", "beznadziejna", "beznadziejne",
+    "tragiczny", "tragiczna", "tragiczne", "kiepski", "kiepska",
+    "kiepskie", "marny", "marna", "marne", "zalosny", "zalosna",
+    "glupi", "glupia", "glupie", "nudny", "nudna", "nudne",
+    "rozczarowujacy", "rozczarowujaca", "rozczarowanie",
+    "bad", "terrible", "awful", "horrible", "worst", "hate", "poor",
+    "disappointing", "useless", "waste", "broken", "boring",
+}
+_STRONG_NEGATIVE_PHRASES = (
+    r"\bnie\s+(?:bardzo\s+)?polecam\b",
+    r"\bnie\s+warto\b",
+    r"\bnie\s+podoba(?:l|la|lo)?\b",
+    r"\bstrata\s+czasu\b",
+    r"\bodradzam\b",
+)
+_STRONG_POSITIVE_PHRASES = (
+    r"\bgoraco\s+polecam\b",
+    r"\bbardzo\s+polecam\b",
+    r"\bwarto\s+obejrzec\b",
+)
 
 
 def _resolve_lang(text, lang):
@@ -17,6 +59,75 @@ def _resolve_lang(text, lang):
         return d if d and d != "unknown" else "en"
     except Exception:
         return "en"
+
+
+def _fold(text):
+    text = (text or "").translate(str.maketrans({
+        "ą": "a", "ć": "c", "ę": "e", "ł": "l", "ń": "n",
+        "ó": "o", "ś": "s", "ź": "z", "ż": "z",
+        "Ą": "A", "Ć": "C", "Ę": "E", "Ł": "L", "Ń": "N",
+        "Ó": "O", "Ś": "S", "Ź": "Z", "Ż": "Z",
+    }))
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch)).lower()
+
+
+def _sentiment_tokens(text):
+    return re.findall(r"[a-z0-9']+", _fold(text))
+
+
+def _term_score(token):
+    if token in _POSITIVE_TERMS:
+        return 1.0
+    if token in _NEGATIVE_TERMS:
+        return -1.0
+    # Polish inflection fallback: keep this stem-based and generic.
+    if any(token.startswith(stem) for stem in (
+        "swietn", "doskonal", "wspanial", "fantastycz", "genialn",
+        "rewelacyj", "znakomit", "idealn",
+    )):
+        return 1.0
+    if any(token.startswith(stem) for stem in (
+        "fataln", "okropn", "straszn", "beznadziej", "tragiczn",
+        "kiepsk", "glup", "nudn", "rozczarow",
+    )):
+        return -1.0
+    return 0.0
+
+
+def _classify_sentiment_rule(text):
+    """Small deterministic PL/EN rule set with negation handling.
+
+    Lab03's original rule list is intentionally simple and, in this
+    project copy, contains mojibake in Polish words. The Lab05 tool needs
+    a more robust direct-test path, especially for phrases like
+    "nie polecam".
+    """
+    folded = _fold(text)
+    score = 0.0
+    for pattern in _STRONG_NEGATIVE_PHRASES:
+        if re.search(pattern, folded):
+            score -= 2.0
+    for pattern in _STRONG_POSITIVE_PHRASES:
+        if re.search(pattern, folded):
+            score += 1.5
+
+    tokens = _sentiment_tokens(text)
+    for i, token in enumerate(tokens):
+        base = _term_score(token)
+        if not base:
+            continue
+        window = tokens[max(0, i - 3):i]
+        if any(t in _NEGATORS for t in window):
+            base *= -1.2
+        if window and window[-1] in _INTENSIFIERS:
+            base *= 1.4
+        score += base
+
+    if abs(score) < 0.4:
+        return "neutralny", 0.5
+    confidence = round(min(0.95, 0.35 + abs(score) / 4.0), 4)
+    return ("pozytywny" if score > 0 else "negatywny"), confidence
 
 
 def nlp_tools(operation, text, language="auto", target_language=None,
@@ -69,8 +180,8 @@ def nlp_tools(operation, text, language="auto", target_language=None,
 
     if operation == "classify_sentiment":
         try:
-            label, conf = predict_rule(text)
-            return {"operation": "classify_sentiment", "method": "rule",
+            label, conf = _classify_sentiment_rule(text)
+            return {"operation": "classify_sentiment", "method": "rule_v2",
                     "label": label, "confidence": float(conf)}
         except Exception as e:
             return {"operation": "classify_sentiment", "error": str(e)}

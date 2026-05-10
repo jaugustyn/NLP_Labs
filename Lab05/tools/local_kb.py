@@ -116,6 +116,11 @@ def local_knowledge(query, max_hits=LOCAL_KB_MAX_HITS):
     Lab 1 sentences)."""
     if not isinstance(query, str) or not query.strip():
         return {"error": "Empty query."}
+    try:
+        max_hits = int(max_hits)
+    except (TypeError, ValueError):
+        max_hits = LOCAL_KB_MAX_HITS
+    max_hits = max(1, min(max_hits, 20))
     qt = _tokenize(query)
     if not qt:
         return {"error": "No usable tokens in query."}
@@ -140,8 +145,10 @@ SCHEMA = {
             "Search local knowledge accumulated by the bot across "
             "previous labs: cached Wikidata entity links (Lab 4 NEL "
             "cache), saved summaries, and the Lab 1 sentences dataset. "
-            "Use BEFORE calling web_search when the user might be "
-            "asking about something already seen by the bot."
+            "Use this only when the user explicitly asks about local "
+            "bot knowledge, saved summaries, previous data, or the "
+            "local KB. For general facts and current information use "
+            "web_search instead."
         ),
         "parameters": {
             "type": "object",

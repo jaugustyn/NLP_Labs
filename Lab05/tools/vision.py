@@ -2,16 +2,27 @@
 Ollama model (default: qwen2.5vl:3b)."""
 import os
 
-from config import VISION_MODEL
+from config import VISION_MAX_IMAGE_BYTES, VISION_MODEL
 import ollama_client
+
+_ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
 def analyze_image(image_path, prompt=None):
     """Describe or answer a question about an image."""
     if not isinstance(image_path, str) or not image_path:
         return {"error": "image_path is required."}
-    if not os.path.exists(image_path):
+    if not os.path.isfile(image_path):
         return {"error": f"File not found: {image_path}"}
+    ext = os.path.splitext(image_path)[1].lower()
+    if ext not in _ALLOWED_IMAGE_EXTENSIONS:
+        return {"error": f"Unsupported image extension: {ext or '(none)'}"}
+    try:
+        size = os.path.getsize(image_path)
+    except OSError as e:
+        return {"error": f"Cannot read image file: {e}"}
+    if size > VISION_MAX_IMAGE_BYTES:
+        return {"error": f"Image is too large: {size} bytes."}
     user_prompt = (
         prompt
         or "Describe this image in 2-4 sentences. Mention objects, "
