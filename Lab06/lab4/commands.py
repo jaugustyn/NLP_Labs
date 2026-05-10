@@ -1,6 +1,4 @@
-"""Lab 4 command handlers — NER, NEL, NED, translation, summarization,
-language detection, knowledge graph. Lab 1 + Lab 2 + Lab 3 commands are
-delegated to the lab3 subpackage."""
+"""Lab 4 command handlers."""
 import os
 import re
 import time
@@ -24,34 +22,7 @@ from lab4 import translation as translation_mod
 from lab4 import summarization as summarization_mod
 from lab4 import knowledge_graph as kg_mod
 
-from lab3.commands import register_handlers as register_lab123_handlers
-
-
-# =====================================================================
-#  HELP
-# =====================================================================
-
-HELP_TEXT = (
-    "NLP Bot — Lab 1 + Lab 2 + Lab 3 + Lab 4\n\n"
-    "--- Lab 1 ---\n"
-    "/task <name> \"text\" \"class\"\n"
-    "/full_pipeline \"text\" \"class\"\n"
-    "/classifier \"text\"\n"
-    "/stats\n\n"
-    "Tasks: tokenize, remove_stopwords, lemmatize, stemming,\n"
-    "stats, n-grams, plot_histogram, plot_wordcloud, plot_barchart\n\n"
-    "--- Lab 2 ---\n"
-    "/classify dataset=<name> method=<model> gridsearch=<true/false> run=<n>\n"
-    "  Datasets: 20news_group, imdb, amazon, ag_news\n"
-    "  Methods: nb, rf, mlp, logreg, all\n\n"
-    "--- Lab 3 ---\n"
-    "/sentiment method=<m> text=\"...\" [dataset=<d>]\n"
-    "  Methods: rule, nb, rf, transformer, textblob, stanza,\n"
-    "  simplernn, lstm, gru\n\n"
-    "/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom>\n"
-    "/compare dataset=<amazon|imdb|custom> methods=<m1,m2,...>\n"
-    "/add_sentiment \"text\" \"label\"\n"
-    "/models\n\n"
+HELP_SECTION = (
     "--- Lab 4 ---\n"
     "/language_detect text=\"...\"\n"
     "/ner method=<spacy|stanza> text=\"...\" [language=auto|en|pl]\n"
@@ -573,10 +544,6 @@ def _handle_knowledge_graph(bot, message):
 # =====================================================================
 
 def register_handlers(bot):
-    @bot.message_handler(commands=["start", "help"])
-    def cmd_help(message):
-        bot.reply_to(message, HELP_TEXT)
-
     @bot.message_handler(commands=["language_detect"])
     def cmd_language_detect(message):
         _handle_language_detect(bot, message)
@@ -609,4 +576,5 @@ def register_handlers(bot):
     def cmd_knowledge_graph(message):
         _handle_knowledge_graph(bot, message)
 
-    register_lab123_handlers(bot)
+
+__all__ = ["HELP_SECTION", "register_handlers"]
