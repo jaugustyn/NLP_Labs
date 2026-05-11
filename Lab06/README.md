@@ -266,7 +266,6 @@ Lab06/
 ├── bot.py
 ├── commands.py
 ├── config.py
-├── instructions.md
 ├── requirements.txt
 ├── utils.py
 ├── lab1/

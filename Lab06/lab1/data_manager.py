@@ -1,3 +1,5 @@
+"""JSON persistence helpers for Lab 1 examples."""
+
 import json
 import os
 from datetime import datetime
@@ -5,12 +7,13 @@ from datetime import datetime
 _DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(_DIR, "sentences.json")
 
+
 def load_records():
     if not os.path.exists(DATA_FILE):
         return []
-    
+
     try:
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
             content = f.read().strip()
             if not content:
                 return []
@@ -25,15 +28,18 @@ def load_records():
             pass
         return []
 
+
 def save_record(text, text_class):
     records = load_records()
-    
+
     new_entry = {
         "text": text,
-        "class": text_class
+        "class": text_class,
     }
-    
+
     records.append(new_entry)
-    
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+
+    tmp_path = f"{DATA_FILE}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_path, DATA_FILE)

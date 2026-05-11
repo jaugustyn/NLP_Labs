@@ -1,15 +1,40 @@
 """Shared command parsing and formatting helpers."""
 
 import re
+import shlex
 import traceback
 
 
 def parse_params(text):
-    """Parse key=value and key="quoted value" from command text."""
+    """Parse key=value command parameters.
+
+    Supports unquoted values, double/single quoted values and falls back
+    to the legacy regex parser when the input contains an unfinished
+    quote.
+    """
+    text = text or ""
     params = {}
-    for match in re.finditer(r'(\w+)=(?:"([^"]*)"|(\S+))', text):
+    try:
+        tokens = shlex.split(text)
+    except ValueError:
+        tokens = []
+
+    for token in tokens:
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        if key:
+            params[key.lower()] = value
+
+    if params:
+        return params
+
+    for match in re.finditer(r'(\w+)=(?:"([^"]*)"|\'([^\']*)\'|(\S+))', text):
         key = match.group(1).lower()
-        value = match.group(2) if match.group(2) is not None else match.group(3)
+        value = next(
+            group for group in match.groups()[1:]
+            if group is not None
+        )
         params[key] = value
     return params
 
