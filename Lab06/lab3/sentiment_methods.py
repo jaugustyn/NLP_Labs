@@ -1,112 +1,236 @@
-﻿import numpy as np
+"""Sentiment prediction methods used by Lab 3."""
 
-from lab3.preprocessing import clean_text, texts_to_padded
+import re
+import unicodedata
+
+import numpy as np
+
 from lab3.model_loader import (
-    load_neural_model, load_sklearn_model, save_sklearn_model,
     find_model_for_method,
+    load_neural_model,
+    load_sklearn_model,
+    save_sklearn_model,
 )
+from lab3.preprocessing import clean_text, texts_to_padded
 
-# ===================== 1. Rule-based =====================
 
-_POS_EN = {
-    "good", "great", "excellent", "amazing", "wonderful", "fantastic",
-    "love", "best", "awesome", "perfect", "beautiful", "happy", "enjoy",
-    "recommend", "outstanding", "brilliant", "superb", "pleased",
-    "impressive", "favorite", "delightful", "incredible",
+TOKEN_RE = re.compile(r"(?u)\b\w+\b")
+
+POSITIVE_WORDS = {
+    "amazing",
+    "awesome",
+    "beautiful",
+    "best",
+    "brilliant",
+    "cudowny",
+    "delightful",
+    "dobra",
+    "dobre",
+    "dobry",
+    "doskonala",
+    "doskonale",
+    "doskonaly",
+    "excellent",
+    "fantastic",
+    "fantastyczna",
+    "fantastyczne",
+    "fantastyczny",
+    "favorite",
+    "genialny",
+    "good",
+    "great",
+    "happy",
+    "idealny",
+    "impressive",
+    "kocham",
+    "love",
+    "najlepszy",
+    "outstanding",
+    "perfect",
+    "perfekcyjny",
+    "pieknie",
+    "piekna",
+    "piekne",
+    "piekny",
+    "pleased",
+    "pomocna",
+    "pomocny",
+    "polecam",
+    "recommend",
+    "rewelacyjny",
+    "super",
+    "superb",
+    "swietna",
+    "swietne",
+    "swietnie",
+    "swietny",
+    "uwielbiam",
+    "wspaniale",
+    "wspanialy",
+    "zadowolony",
+    "znakomity",
 }
-_NEG_EN = {
-    "bad", "terrible", "awful", "horrible", "worst", "hate", "poor",
-    "disappointing", "useless", "waste", "broken", "damaged", "angry",
-    "disgusting", "boring", "mediocre", "dreadful", "pathetic",
-    "annoying", "frustrated", "garbage", "rubbish",
+
+NEGATIVE_WORDS = {
+    "angry",
+    "annoying",
+    "awful",
+    "bad",
+    "beznadziejny",
+    "bezuzyteczny",
+    "boring",
+    "broken",
+    "damaged",
+    "disappointing",
+    "dreadful",
+    "disgusting",
+    "fatalnie",
+    "fatalny",
+    "frustrated",
+    "garbage",
+    "hate",
+    "horrible",
+    "kiepski",
+    "marny",
+    "mediocre",
+    "najgorszy",
+    "nienawidze",
+    "niezadowolony",
+    "nudny",
+    "okropnie",
+    "okropny",
+    "pathetic",
+    "poor",
+    "rozczarowany",
+    "rubbish",
+    "skandaliczny",
+    "slaby",
+    "straszny",
+    "terrible",
+    "tragiczna",
+    "tragiczne",
+    "tragiczny",
+    "useless",
+    "uszkodzony",
+    "waste",
+    "weak",
+    "worst",
+    "zalosny",
+    "zly",
 }
-_POS_PL = {
-    "Ĺ›wietny", "super", "doskonaĹ‚y", "wspaniaĹ‚y", "cudowny", "fantastyczny",
-    "kocham", "najlepszy", "piÄ™kny", "szczÄ™Ĺ›liwy", "polecam", "rewelacyjny",
-    "genialny", "zadowolony", "uwielbiam", "idealny", "perfekcyjny",
-    "znakomity", "wspaniale", "Ĺ›wietnie", "doskonale",
-}
-_NEG_PL = {
-    "zĹ‚y", "okropny", "fatalny", "straszny", "najgorszy", "nienawidzÄ™",
-    "sĹ‚aby", "rozczarowany", "bezuĹĽyteczny", "uszkodzony", "nudny",
-    "beznadziejny", "tragiczny", "niezadowolony", "kiepski", "marny",
-    "skandaliczny", "ĹĽaĹ‚osny", "fatalnie", "okropnie",
-}
-_ALL_POS = _POS_EN | _POS_PL
-_ALL_NEG = _NEG_EN | _NEG_PL
+
+NEGATION_WORDS = {"nie", "not", "never", "no", "bez"}
+
+
+def _normalize(value):
+    value = unicodedata.normalize("NFKD", value or "")
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    return value.lower()
+
+
+def _tokens(text):
+    return TOKEN_RE.findall(_normalize(text))
 
 
 def predict_rule(text):
-    words = set(text.lower().split())
-    pos = len(words & _ALL_POS)
-    neg = len(words & _ALL_NEG)
-    score = pos - neg
+    tokens = _tokens(text)
+    if not tokens:
+        return "neutralny", 0.5
+
+    positive = 0
+    negative = 0
+    for index, token in enumerate(tokens):
+        is_positive = token in POSITIVE_WORDS
+        is_negative = token in NEGATIVE_WORDS
+        if not is_positive and not is_negative:
+            continue
+
+        window = tokens[max(0, index - 2) : index]
+        negated = any(word in NEGATION_WORDS for word in window)
+        if is_positive and not negated:
+            positive += 1
+        elif is_positive and negated:
+            negative += 1
+        elif is_negative and not negated:
+            negative += 1
+        else:
+            positive += 1
+
+    score = positive - negative
+    total_hits = positive + negative
+    confidence = round(min(1.0, 0.5 + abs(score) / max(2, total_hits * 2)), 4)
     if score > 0:
-        return "pozytywny", round(min(1.0, score / 5), 4)
-    elif score < 0:
-        return "negatywny", round(min(1.0, abs(score) / 5), 4)
+        return "pozytywny", confidence
+    if score < 0:
+        return "negatywny", confidence
     return "neutralny", 0.5
 
 
-# ===================== 2. Naive Bayes =====================
+def train_sklearn_sentiment_model(
+    model_name,
+    dataset_name,
+    texts=None,
+    labels=None,
+    label_names=None,
+    save=True,
+):
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.naive_bayes import MultinomialNB
+
+    from lab3.data_loader import load_dataset
+
+    if texts is None or labels is None or label_names is None:
+        texts, labels, label_names = load_dataset(dataset_name)
+
+    cleaned = [clean_text(text) for text in texts]
+    vectorizer = TfidfVectorizer(max_features=10000, ngram_range=(1, 2))
+    X = vectorizer.fit_transform(cleaned)
+
+    if model_name == "nb":
+        model = MultinomialNB()
+    elif model_name == "rf":
+        model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+    else:
+        raise ValueError(f"Unsupported sklearn sentiment model: {model_name}")
+
+    model.fit(X, labels)
+    artifact = {
+        "vectorizer": vectorizer,
+        "model": model,
+        "label_names": list(label_names),
+    }
+    if save:
+        save_sklearn_model(model_name, dataset_name, artifact)
+    return artifact
+
+
+def _predict_sklearn(text, artifact):
+    vectorizer = artifact["vectorizer"]
+    model = artifact["model"]
+    label_names = artifact["label_names"]
+    X_new = vectorizer.transform([clean_text(text)])
+    prediction = int(model.predict(X_new)[0])
+    confidence = 0.0
+    if hasattr(model, "predict_proba"):
+        confidence = float(model.predict_proba(X_new).max())
+    label = label_names[prediction] if prediction < len(label_names) else str(prediction)
+    return label, round(confidence, 4)
+
 
 def predict_nb(text, dataset_name="imdb"):
-    """Predict with Naive Bayes. Loads saved model or trains on-the-fly."""
     saved = load_sklearn_model("nb", dataset_name)
-    if saved:
-        vec = saved["vectorizer"]
-        model = saved["model"]
-        label_names = saved["label_names"]
-    else:
-        from sklearn.naive_bayes import MultinomialNB
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        from lab3.data_loader import load_dataset
+    if saved is None:
+        saved = train_sklearn_sentiment_model("nb", dataset_name)
+    return _predict_sklearn(text, saved)
 
-        texts, labels, label_names = load_dataset(dataset_name)
-        vec = TfidfVectorizer(max_features=10000)
-        X = vec.fit_transform(texts)
-        model = MultinomialNB()
-        model.fit(X, labels)
-        save_sklearn_model("nb", dataset_name, {
-            "vectorizer": vec, "model": model, "label_names": label_names,
-        })
-
-    X_new = vec.transform([clean_text(text)])
-    pred = model.predict(X_new)[0]
-    proba = float(model.predict_proba(X_new).max())
-    return label_names[pred], round(proba, 4)
-
-
-# ===================== 2b. Random Forest =====================
 
 def predict_rf(text, dataset_name="imdb"):
-    """Predict with Random Forest. Loads saved model or trains on-the-fly."""
     saved = load_sklearn_model("rf", dataset_name)
-    if saved:
-        vec = saved["vectorizer"]
-        model = saved["model"]
-        label_names = saved["label_names"]
-    else:
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        from lab3.data_loader import load_dataset
+    if saved is None:
+        saved = train_sklearn_sentiment_model("rf", dataset_name)
+    return _predict_sklearn(text, saved)
 
-        texts, labels, label_names = load_dataset(dataset_name)
-        vec = TfidfVectorizer(max_features=10000)
-        X = vec.fit_transform(texts)
-        model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-        model.fit(X, labels)
-        save_sklearn_model("rf", dataset_name, {
-            "vectorizer": vec, "model": model, "label_names": label_names,
-        })
-
-    X_new = vec.transform([clean_text(text)])
-    pred = model.predict(X_new)[0]
-    proba = float(model.predict_proba(X_new).max())
-    return label_names[pred], round(proba, 4)
-
-
-# ===================== 3. Transformer =====================
 
 _transformer_pipe = None
 
@@ -115,19 +239,18 @@ def predict_transformer(text):
     global _transformer_pipe
     if _transformer_pipe is None:
         from transformers import pipeline
+
         _transformer_pipe = pipeline(
             "sentiment-analysis",
             model="distilbert-base-uncased-finetuned-sst-2-english",
         )
     result = _transformer_pipe(text[:512])[0]
     label = result["label"].lower()
-    score = round(result["score"], 4)
+    score = round(float(result["score"]), 4)
     if label == "positive":
         return "pozytywny", score
     return "negatywny", score
 
-
-# ===================== 4. TextBlob =====================
 
 def predict_textblob(text):
     from textblob import TextBlob
@@ -135,12 +258,10 @@ def predict_textblob(text):
     polarity = TextBlob(text).sentiment.polarity
     if polarity > 0.1:
         return "pozytywny", round(abs(polarity), 4)
-    elif polarity < -0.1:
+    if polarity < -0.1:
         return "negatywny", round(abs(polarity), 4)
     return "neutralny", round(1.0 - abs(polarity), 4)
 
-
-# ===================== 5. Stanza =====================
 
 _stanza_pipe = None
 
@@ -149,68 +270,69 @@ def predict_stanza(text):
     global _stanza_pipe
     if _stanza_pipe is None:
         import stanza
+
         try:
             _stanza_pipe = stanza.Pipeline(
-                "en", processors="tokenize,sentiment", verbose=False,
+                "en",
+                processors="tokenize,sentiment",
+                verbose=False,
             )
         except Exception:
             stanza.download("en", processors="tokenize,sentiment", verbose=False)
             _stanza_pipe = stanza.Pipeline(
-                "en", processors="tokenize,sentiment", verbose=False,
+                "en",
+                processors="tokenize,sentiment",
+                verbose=False,
             )
 
     doc = _stanza_pipe(text[:1000])
-    sentiments = [s.sentiment for s in doc.sentences]
+    sentiments = [sentence.sentiment for sentence in doc.sentences]
     if not sentiments:
         return "neutralny", 0.5
 
-    avg = np.mean(sentiments)  # 0=neg, 1=neutral, 2=pos
-    if avg > 1.5:
-        return "pozytywny", round(min(1.0, avg - 1.0), 4)
-    elif avg < 0.5:
-        return "negatywny", round(min(1.0, 1.0 - avg), 4)
-    return "neutralny", round(1.0 - abs(avg - 1.0), 4)
+    average = float(np.mean(sentiments))
+    if average > 1.5:
+        return "pozytywny", round(min(1.0, average - 1.0), 4)
+    if average < 0.5:
+        return "negatywny", round(min(1.0, 1.0 - average), 4)
+    return "neutralny", round(1.0 - abs(average - 1.0), 4)
 
-
-# ===================== 6-8. Neural (SimpleRNN / LSTM / GRU) =====================
 
 def predict_neural(text, model_type, dataset_name):
-    model, tokenizer, le, meta = load_neural_model(model_type, dataset_name)
+    model, tokenizer, label_encoder, meta = load_neural_model(model_type, dataset_name)
     max_len = meta.get("max_len", 200)
     num_classes = meta.get("num_classes", 2)
 
     cleaned = clean_text(text)
     X = texts_to_padded(tokenizer, [cleaned], max_len)
-    pred = model.predict(X, verbose=0)
+    prediction = model.predict(X, verbose=0)
 
     if num_classes == 2:
-        prob = float(pred[0][0])
-        idx = 1 if prob > 0.5 else 0
-        confidence = prob if prob > 0.5 else 1.0 - prob
+        probability = float(prediction[0][0])
+        label_index = 1 if probability > 0.5 else 0
+        confidence = probability if probability > 0.5 else 1.0 - probability
     else:
-        idx = int(np.argmax(pred[0]))
-        confidence = float(pred[0][idx])
+        label_index = int(np.argmax(prediction[0]))
+        confidence = float(prediction[0][label_index])
 
-    label = le.inverse_transform([idx])[0]
+    label = label_encoder.inverse_transform([label_index])[0]
     return label, round(confidence, 4)
 
-
-# ===================== Dispatcher =====================
 
 def predict_sentiment(method, text, dataset_name=None):
     if method == "rule":
         return predict_rule(text)
-    elif method == "nb":
+    if method == "nb":
         return predict_nb(text, dataset_name or "imdb")
-    elif method == "rf":
+    if method == "rf":
         return predict_rf(text, dataset_name or "imdb")
-    elif method == "transformer":
+    if method == "transformer":
         return predict_transformer(text)
-    elif method == "textblob":
+    if method == "textblob":
         return predict_textblob(text)
-    elif method == "stanza":
+    if method == "stanza":
         return predict_stanza(text)
-    elif method in ("simplernn", "lstm", "gru"):
+    if method in ("simplernn", "lstm", "gru"):
         if not dataset_name:
             dataset_name = find_model_for_method(method)
             if not dataset_name:
@@ -219,6 +341,4 @@ def predict_sentiment(method, text, dataset_name=None):
                     f"Train one first: /train model={method} dataset=<amazon|imdb|custom>"
                 )
         return predict_neural(text, method, dataset_name)
-    else:
-        raise ValueError(f"Unknown method: {method}")
-
+    raise ValueError(f"Unknown method: {method}")

@@ -132,6 +132,7 @@ def moderate_content(text, user_id="anonymous", username="",
     qwen = models.classify_qwen_guard(text)
     sentiment = models.analyze_sentiment_for_moderation(text)
     entities = models.extract_moderation_entities(text)
+    similar_cases = actions.find_similar_violations(text, limit=3)
     decision = _decide(pii, bielik, qwen, history)
 
     result = {
@@ -144,6 +145,7 @@ def moderate_content(text, user_id="anonymous", username="",
         "qwen": qwen,
         "sentiment": sentiment,
         "entities": entities,
+        "similar_cases": similar_cases,
         "user_history": history,
         **decision,
     }

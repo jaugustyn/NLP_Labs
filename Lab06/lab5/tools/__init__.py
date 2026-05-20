@@ -49,13 +49,40 @@ def get_tools_payload(names=None):
     ]
 
 
+def _tool_parameters(schema):
+    return ((schema.get("function") or {}).get("parameters") or {})
+
+
+def _sanitize_arguments(schema, arguments):
+    params = _tool_parameters(schema)
+    properties = params.get("properties") or {}
+    required = params.get("required") or []
+    if not isinstance(arguments, dict):
+        arguments = {}
+
+    if properties:
+        arguments = {
+            key: value for key, value in arguments.items()
+            if key in properties
+        }
+
+    missing = [
+        key for key in required
+        if arguments.get(key) is None or arguments.get(key) == ""
+    ]
+    if missing:
+        return None, f"Missing required argument(s): {', '.join(missing)}"
+    return arguments, None
+
+
 def call_tool(name, arguments):
     """Invoke a registered tool by name with a dict of arguments."""
     if name not in TOOL_REGISTRY:
         return {"error": f"Unknown tool: {name}"}
-    fn, _ = TOOL_REGISTRY[name]
-    if not isinstance(arguments, dict):
-        arguments = {}
+    fn, schema = TOOL_REGISTRY[name]
+    arguments, error = _sanitize_arguments(schema, arguments)
+    if error:
+        return {"error": f"Bad arguments for {name}: {error}"}
     try:
         return fn(**arguments)
     except TypeError as e:

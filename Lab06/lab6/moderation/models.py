@@ -52,7 +52,14 @@ def _fold(text):
 
 
 def _contains_any(text, terms):
-    return any(term in text for term in terms)
+    for term in terms:
+        if " " in term:
+            if term in text:
+                return True
+            continue
+        if re.search(rf"(?<!\w){re.escape(term)}\w*(?!\w)", text):
+            return True
+    return False
 
 
 def _score_to_severity(score):
@@ -67,7 +74,18 @@ def _score_to_severity(score):
 
 def _looks_like_card(value):
     digits = re.sub(r"\D", "", value or "")
-    return 13 <= len(digits) <= 19
+    if not 13 <= len(digits) <= 19:
+        return False
+    total = 0
+    reverse_digits = digits[::-1]
+    for index, char in enumerate(reverse_digits):
+        number = int(char)
+        if index % 2 == 1:
+            number *= 2
+            if number > 9:
+                number -= 9
+        total += number
+    return total % 10 == 0
 
 
 def detect_private_info(text):
@@ -231,7 +249,7 @@ def extract_moderation_entities(text):
 
     try:
         from lab4 import ner
-        for ent in ner.extract_entities_spacy(text, lang="pl"):
+        for ent in ner.extract_entities(text, method="spacy", lang="pl"):
             label = (ent.get("label") or "").upper()
             value = ent.get("text")
             if not value:

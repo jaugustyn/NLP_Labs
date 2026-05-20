@@ -2,6 +2,9 @@
 from . import storage
 
 
+_VALID_FEEDBACK_DECISIONS = {"APPROVE", "REJECT", "FLAG_FOR_REVIEW"}
+
+
 def approve_content(content_id, moderator_id="bot"):
     storage.append_action(
         "APPROVE",
@@ -94,7 +97,15 @@ def add_to_watchlist(user_id, reason):
 
 
 def add_feedback(content_id, moderator_override, comment=""):
-    row = storage.append_feedback(content_id, moderator_override, comment)
+    decision = (moderator_override or "").upper()
+    if decision not in _VALID_FEEDBACK_DECISIONS:
+        return {
+            "error": (
+                "moderator_override must be APPROVE, REJECT or "
+                "FLAG_FOR_REVIEW"
+            )
+        }
+    row = storage.append_feedback(content_id, decision, comment)
     return {
         "content_id": content_id,
         "original_bot_decision": row.get("original_bot_decision"),

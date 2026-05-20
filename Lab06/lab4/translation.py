@@ -9,6 +9,10 @@ from config import (
 _pipelines = {}
 
 
+def validate_pair(src, tgt):
+    return (src, tgt) in SUPPORTED_TRANSLATION_PAIRS
+
+
 def _get_pipeline(src, tgt):
     key = (src, tgt)
     if key in _pipelines:

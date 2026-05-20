@@ -4,12 +4,14 @@ import os
 import threading
 
 from lab2 import visualizer as lab2_visualizer
+from lab2.dataset_loader import AVAILABLE_DATASETS
 from lab2.experiment import run_experiment as run_lab2_experiment
+from lab2.models import ALL_MODELS, resolve_methods
 from utils import log_error, parse_params
 
 
-LAB2_DATASETS = {"20news_group", "imdb", "amazon", "ag_news"}
-LAB2_METHODS = {"nb", "rf", "mlp", "logreg", "all"}
+LAB2_DATASETS = set(AVAILABLE_DATASETS)
+LAB2_METHODS = set(ALL_MODELS) | {"all"}
 
 HELP_SECTION = (
     "--- Lab 2 ---\n"
@@ -33,7 +35,8 @@ def _handle_classify(bot, message):
         if not dataset or dataset not in LAB2_DATASETS:
             bot.reply_to(
                 message,
-                f"Invalid or missing dataset. Allowed: {', '.join(sorted(LAB2_DATASETS))}"
+                "Invalid or missing dataset. "
+                f"Allowed: {', '.join(sorted(LAB2_DATASETS))}",
             )
             return
 
@@ -42,14 +45,11 @@ def _handle_classify(bot, message):
             bot.reply_to(message, "Missing 'method' parameter.")
             return
 
-        methods_list = [m.strip().lower() for m in method.split(",")]
-        for method_name in methods_list:
-            if method_name not in LAB2_METHODS:
-                bot.reply_to(
-                    message,
-                    f"Unknown method '{method_name}'. Allowed: {', '.join(sorted(LAB2_METHODS))}"
-                )
-                return
+        try:
+            methods_list = resolve_methods(method)
+        except ValueError as e:
+            bot.reply_to(message, f"{e} Allowed: {', '.join(sorted(LAB2_METHODS))}")
+            return
 
         gs_raw = params.get("gridsearch", "false").lower()
         if gs_raw not in ("true", "false"):
@@ -69,7 +69,7 @@ def _handle_classify(bot, message):
             message,
             f"Starting Lab 2 experiment:\n"
             f"  dataset    = {dataset}\n"
-            f"  method     = {method}\n"
+            f"  method     = {','.join(methods_list)}\n"
             f"  gridsearch = {gridsearch}\n"
             f"  runs       = {n_runs}\n\n"
             "This may take several minutes.",

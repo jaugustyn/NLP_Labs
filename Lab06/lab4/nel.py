@@ -15,6 +15,61 @@ from config import (
 _cache = None
 _HEADERS = {"User-Agent": HTTP_USER_AGENT}
 
+_LOCAL_KB = {
+    "en": {
+        "steve jobs": {
+            "qid": "Q19837",
+            "label": "Steve Jobs",
+            "description": "American entrepreneur and co-founder of Apple",
+            "wikipedia_url": "https://en.wikipedia.org/wiki/Steve_Jobs",
+        },
+        "elon musk": {
+            "qid": "Q317521",
+            "label": "Elon Musk",
+            "description": "Businessperson associated with Tesla, SpaceX and xAI",
+            "wikipedia_url": "https://en.wikipedia.org/wiki/Elon_Musk",
+        },
+        "tesla": {
+            "qid": "Q478214",
+            "label": "Tesla, Inc.",
+            "description": "American electric vehicle and clean energy company",
+            "wikipedia_url": "https://en.wikipedia.org/wiki/Tesla,_Inc.",
+        },
+        "spacex": {
+            "qid": "Q193701",
+            "label": "SpaceX",
+            "description": "American space technology company",
+            "wikipedia_url": "https://en.wikipedia.org/wiki/SpaceX",
+        },
+        "xai": {
+            "qid": "Q119973459",
+            "label": "xAI",
+            "description": "Artificial intelligence company founded by Elon Musk",
+            "wikipedia_url": "https://en.wikipedia.org/wiki/XAI_(company)",
+        },
+        "austin": {
+            "qid": "Q16559",
+            "label": "Austin",
+            "description": "Capital city of Texas, United States",
+            "wikipedia_url": "https://en.wikipedia.org/wiki/Austin,_Texas",
+        },
+    },
+    "pl": {
+        "warszawa": {
+            "qid": "Q270",
+            "label": "Warszawa",
+            "description": "Stolica Polski",
+            "wikipedia_url": "https://pl.wikipedia.org/wiki/Warszawa",
+        },
+        "polska": {
+            "qid": "Q36",
+            "label": "Polska",
+            "description": "Państwo w Europie Środkowej",
+            "wikipedia_url": "https://pl.wikipedia.org/wiki/Polska",
+        },
+    },
+}
+
 
 def _load_cache():
     global _cache
@@ -41,6 +96,27 @@ def _save_cache():
 
 def _cache_key(name, lang):
     return f"{lang}::{name.lower()}"
+
+
+def search_local_kb(name, lang="en"):
+    records = _LOCAL_KB.get(lang, {})
+    record = records.get((name or "").strip().lower())
+    if not record and lang != "en":
+        record = _LOCAL_KB.get("en", {}).get((name or "").strip().lower())
+    if not record:
+        return []
+
+    candidate = dict(record)
+    candidate["source"] = "local"
+    return [candidate]
+
+
+def local_wikipedia_url(qid):
+    for records in _LOCAL_KB.values():
+        for record in records.values():
+            if record.get("qid") == qid:
+                return record.get("wikipedia_url", "")
+    return ""
 
 
 def search_wikidata(name, lang="en", limit=NEL_TOP_K):
@@ -88,9 +164,32 @@ def search_wikidata(name, lang="en", limit=NEL_TOP_K):
     return candidates
 
 
+def search_candidates(name, lang="en", limit=NEL_TOP_K):
+    merged = []
+    seen = set()
+    for candidate in search_local_kb(name, lang=lang):
+        qid = candidate.get("qid")
+        if qid and qid not in seen:
+            merged.append(candidate)
+            seen.add(qid)
+
+    wikidata_candidates = search_wikidata(name, lang=lang, limit=limit)
+    if wikidata_candidates and "error" in wikidata_candidates[0]:
+        return merged or wikidata_candidates
+
+    for candidate in wikidata_candidates:
+        qid = candidate.get("qid")
+        if qid and qid not in seen:
+            candidate = dict(candidate)
+            candidate.setdefault("source", "wikidata")
+            merged.append(candidate)
+            seen.add(qid)
+    return merged[:limit]
+
+
 def link_entity(name, lang="en"):
     """Return top candidate or None."""
-    candidates = search_wikidata(name, lang=lang, limit=1)
+    candidates = search_candidates(name, lang=lang, limit=1)
     if not candidates or "error" in candidates[0]:
         return None
     return candidates[0]

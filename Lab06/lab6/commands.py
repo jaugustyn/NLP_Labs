@@ -85,6 +85,7 @@ def _format_moderation_result(result, dry_run=False):
     qwen = result.get("qwen", {})
     sentiment = result.get("sentiment", {})
     entities = result.get("entities", {})
+    similar_cases = result.get("similar_cases") or []
     lines = [
         f"{prefix} {result.get('content_id')}",
         f"Action: {result.get('action')}",
@@ -121,6 +122,14 @@ def _format_moderation_result(result, dry_run=False):
         red_flags.append(f"urls={len(entities['urls'])}")
     if red_flags:
         lines.append("Entities: " + ", ".join(red_flags))
+
+    if similar_cases:
+        case = similar_cases[0]
+        lines.append(
+            "Similar case: "
+            f"{case.get('content_id')} "
+            f"({case.get('action')}, score={case.get('score')})"
+        )
 
     return "\n".join(lines)
 

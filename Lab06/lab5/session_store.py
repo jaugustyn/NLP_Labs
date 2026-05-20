@@ -6,6 +6,9 @@ import time
 from config import SESSIONS_DIR, AGENT_HISTORY_TURNS
 
 
+_MAX_RESULT_CHARS = 1200
+
+
 def _path(chat_id):
     os.makedirs(SESSIONS_DIR, exist_ok=True)
     return os.path.join(SESSIONS_DIR, f"{chat_id}.json")
@@ -40,6 +43,16 @@ def _save(chat_id, data):
         pass
 
 
+def _compact_result(result):
+    text = json.dumps(result or {}, ensure_ascii=False)
+    if len(text) > _MAX_RESULT_CHARS:
+        return {"truncated": True, "json": text[:_MAX_RESULT_CHARS] + "..."}
+    try:
+        return json.loads(text)
+    except Exception:
+        return {"text": str(result)}
+
+
 def get_history(chat_id, max_turns=AGENT_HISTORY_TURNS):
     """Return the last N user/assistant message pairs."""
     data = load_session(chat_id)
@@ -66,7 +79,11 @@ def append_run(chat_id, user_text, result):
         "answer": result.get("answer"),
         "iterations": result.get("iterations"),
         "tool_trace": [
-            {"tool": t.get("tool"), "arguments": t.get("arguments")}
+            {
+                "tool": t.get("tool"),
+                "arguments": t.get("arguments"),
+                "result": _compact_result(t.get("result")),
+            }
             for t in (result.get("tool_trace") or [])
         ],
     }

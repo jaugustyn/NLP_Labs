@@ -1,5 +1,10 @@
-﻿import numpy as np
+"""Dataset loading helpers for Lab 2 experiments."""
+
+import re
+
+import numpy as np
 from sklearn.datasets import fetch_20newsgroups
+
 
 MAX_SAMPLES = 5000
 
@@ -10,7 +15,7 @@ DATASET_QUERY_WORDS = {
     "ag_news": ["politics", "sports", "technology", "business", "science"],
 }
 
-AVAILABLE_DATASETS = ["20news_group", "imdb", "amazon", "ag_news"]
+AVAILABLE_DATASETS = ("20news_group", "imdb", "amazon", "ag_news")
 
 
 def load_dataset(name, max_samples=MAX_SAMPLES):
@@ -26,6 +31,7 @@ def load_dataset(name, max_samples=MAX_SAMPLES):
 
     texts, labels, label_names = loader()
     labels = np.array(labels)
+    texts, labels = _drop_empty_texts(texts, labels)
 
     if max_samples and len(texts) > max_samples:
         rng = np.random.RandomState(42)
@@ -33,38 +39,49 @@ def load_dataset(name, max_samples=MAX_SAMPLES):
         texts = [texts[i] for i in indices]
         labels = labels[indices]
 
-    valid = [(t, l) for t, l in zip(texts, labels) if t and t.strip()]
-    if valid:
-        texts, labels = zip(*valid)
-        texts = list(texts)
-        labels = np.array(labels)
-
     return texts, labels, label_names
+
+
+def _drop_empty_texts(texts, labels):
+    valid = [(text, label) for text, label in zip(texts, labels) if text and text.strip()]
+    if not valid:
+        return [], np.array([])
+
+    valid_texts, valid_labels = zip(*valid)
+    return list(valid_texts), np.array(valid_labels)
 
 
 def load_20news():
     data = fetch_20newsgroups(subset="all", remove=("headers", "footers", "quotes"))
     return list(data.data), data.target.tolist(), list(data.target_names)
 
+
 def load_imdb():
-    import re
     from datasets import load_dataset as hf_load
-    ds = hf_load("imdb")
-    texts = list(ds["train"]["text"]) + list(ds["test"]["text"])
-    texts = [re.sub(r"<[^>]+>", " ", t) for t in texts]
-    labels = list(ds["train"]["label"]) + list(ds["test"]["label"])
+
+    dataset = hf_load("imdb")
+    texts = list(dataset["train"]["text"]) + list(dataset["test"]["text"])
+    texts = [re.sub(r"<[^>]+>", " ", text) for text in texts]
+    labels = list(dataset["train"]["label"]) + list(dataset["test"]["label"])
     return texts, labels, ["negative", "positive"]
+
 
 def load_amazon():
     from datasets import load_dataset as hf_load
-    ds = hf_load("amazon_polarity", split="test")
-    texts = [f"{t} {c}" for t, c in zip(ds["title"], ds["content"])]
-    labels = list(ds["label"])
+
+    dataset = hf_load("amazon_polarity", split="test")
+    texts = [
+        f"{title} {content}"
+        for title, content in zip(dataset["title"], dataset["content"])
+    ]
+    labels = list(dataset["label"])
     return texts, labels, ["negative", "positive"]
+
 
 def load_ag_news():
     from datasets import load_dataset as hf_load
-    ds = hf_load("ag_news")
-    texts = list(ds["train"]["text"]) + list(ds["test"]["text"])
-    labels = list(ds["train"]["label"]) + list(ds["test"]["label"])
+
+    dataset = hf_load("ag_news")
+    texts = list(dataset["train"]["text"]) + list(dataset["test"]["text"])
+    labels = list(dataset["train"]["label"]) + list(dataset["test"]["label"])
     return texts, labels, ["World", "Sports", "Business", "Sci/Tech"]

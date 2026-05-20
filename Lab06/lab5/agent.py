@@ -116,16 +116,45 @@ def _repair_tool_args(name, args, user_text):
         args["query"] = _extract_web_query(args.get("query") or user_text)
         if not args.get("language"):
             args["language"] = "pl" if _language_is_polish(user_text) else "en"
-    elif name == "get_weather" and args.get("city"):
-        args["city"] = _clean_location(args["city"])
+    elif name == "get_weather":
+        if args.get("city"):
+            args["city"] = _clean_location(args["city"])
+        else:
+            cities = _extract_weather_cities(user_text)
+            if cities:
+                args["city"] = cities[0]
+    elif name == "calculator" and not args.get("expression"):
+        args["expression"] = _extract_expression(user_text)
     elif name == "nlp_tools":
         op = (args.get("operation") or "").lower()
+        if op:
+            args["operation"] = op
+        if not args.get("text") or args.get("text") == user_text:
+            args["text"] = _extract_quoted_text(user_text) or user_text
         if op == "classify_sentiment":
-            args["operation"] = "classify_sentiment"
-            if not args.get("text") or args.get("text") == user_text:
-                args["text"] = _extract_sentiment_text(user_text) or user_text
+            args["text"] = _extract_sentiment_text(user_text) or args["text"]
             if not args.get("language"):
                 args["language"] = "auto"
+        elif op == "translate":
+            target = _extract_translation_target(user_text)
+            if target and not args.get("target_language"):
+                args["target_language"] = target
+            if not args.get("language"):
+                args["language"] = "auto"
+            extracted = _extract_translation_text(user_text)
+            if extracted:
+                args["text"] = extracted
+        elif op == "summarize":
+            summary_type = (
+                "bullets" if "bullet" in _fold(user_text)
+                else "abstractive"
+            )
+            args.setdefault("summary_type", summary_type)
+            args.setdefault("length", _extract_summary_length(user_text))
+        elif op == "extract_entities":
+            args.setdefault("language", "auto")
+    elif name == "local_knowledge":
+        args["query"] = args.get("query") or _extract_local_kb_query(user_text)
     return args
 
 
@@ -162,7 +191,10 @@ def _format_number(value):
 
 
 def _format_weather_answer(user_text, tool_trace):
-    weather = [r for r in _tool_results(tool_trace, "get_weather") if not r.get("error")]
+    weather = [
+        r for r in _tool_results(tool_trace, "get_weather")
+        if not r.get("error")
+    ]
     if not weather:
         return None
     parts = []
@@ -183,7 +215,10 @@ def _format_weather_answer(user_text, tool_trace):
         parts.append(sentence + ".")
 
     if _needs_average_weather_search(user_text):
-        searches = [r for r in _tool_results(tool_trace, "web_search") if not r.get("error")]
+        searches = [
+            r for r in _tool_results(tool_trace, "web_search")
+            if not r.get("error")
+        ]
         if searches:
             src = searches[-1]
             summary = src.get("summary") or ""
@@ -229,7 +264,10 @@ def _format_datetime_answer(user_text, tool_trace):
 
 
 def _format_web_fact_answer(user_text, tool_trace):
-    searches = [r for r in _tool_results(tool_trace, "web_search") if not r.get("error")]
+    searches = [
+        r for r in _tool_results(tool_trace, "web_search")
+        if not r.get("error")
+    ]
     if not searches:
         return None
     result = searches[-1]
@@ -261,9 +299,52 @@ def _format_image_answer(user_text, tool_trace):
     return description if description else None
 
 
+def _format_calculator_answer(user_text, tool_trace):
+    results = _tool_results(tool_trace, "calculator")
+    if not results:
+        return None
+    result = results[-1]
+    if result.get("error"):
+        return f"Nie udało się obliczyć: {result.get('error')}"
+    return f"Wynik: {_format_number(result.get('result'))}."
+
+
+def _format_local_kb_answer(user_text, tool_trace):
+    results = [
+        r for r in _tool_results(tool_trace, "local_knowledge")
+        if not r.get("error")
+    ]
+    if not results:
+        return None
+    result = results[-1]
+    hits = result.get("hits") or []
+    if not hits:
+        return (
+            "Nie znalazłem pasujących wpisów w lokalnej bazie dla: "
+            f"{result.get('query')}."
+        )
+
+    lines = [
+        f"Lokalna baza wiedzy: {len(hits)} wynik(ów) "
+        f"dla `{result.get('query')}`:"
+    ]
+    for hit in hits[:5]:
+        label = hit.get("label") or hit.get("source")
+        details = (
+            hit.get("description")
+            or hit.get("snippet")
+            or hit.get("text")
+            or ""
+        )
+        lines.append(f"- {label}: {details[:220]}")
+    return "\n".join(lines)
+
+
 def _answer_from_tools(user_text, tool_trace):
     for formatter in (
         _format_image_answer,
+        _format_calculator_answer,
+        _format_local_kb_answer,
         _format_nlp_answer,
         _format_web_fact_answer,
         _format_datetime_answer,
@@ -297,7 +378,8 @@ def _strip_text_param_noise(text):
 def _clean_location(text):
     value = _strip_text_param_noise(text)
     value = re.sub(
-        r"\b(?:jest|są|sa|is|are|będzie|bedzie|teraz|dzisiaj|dzis|dziś|today|now)\b.*$",
+        r"\b(?:jest|są|sa|is|are|będzie|bedzie|teraz|dzisiaj|dzis|"
+        r"dziś|today|now)\b.*$",
         "",
         value,
         flags=re.IGNORECASE,
@@ -307,7 +389,11 @@ def _clean_location(text):
 
 def _split_locations(phrase):
     out = []
-    for part in re.split(r"\s+(?:i|oraz|and|vs|versus)\s+|,", phrase or "", flags=re.IGNORECASE):
+    for part in re.split(
+        r"\s+(?:i|oraz|and|vs|versus)\s+|,",
+        phrase or "",
+        flags=re.IGNORECASE,
+    ):
         cleaned = _clean_location(part)
         if cleaned and cleaned not in out:
             out.append(cleaned)
@@ -351,6 +437,25 @@ def _looks_like_sentiment(text):
     ))
 
 
+def _looks_like_local_kb(text):
+    folded = _fold(text)
+    return any(k in folded for k in (
+        "lokaln", "local kb", "local knowledge", "baza wiedzy",
+        "zapisane", "saved summary", "co wiemy lokalnie", "w lokalnej bazie",
+    ))
+
+
+def _extract_local_kb_query(text):
+    cleaned = re.sub(
+        r"(?i)\b(co\s+wiemy\s+lokalnie\s+o|w\s+lokalnej\s+bazie|"
+        r"lokaln(?:a|ej|e)?\s+baz(?:a|ie|y)\s+wiedzy|local\s+kb|"
+        r"local\s+knowledge|zapisane\s+dane\s+o)\b",
+        " ",
+        text or "",
+    )
+    return cleaned.strip(" .,!?:;\"'()[]{}") or text
+
+
 def _extract_quoted_text(text):
     match = re.search(r'"([^"]+)"|\'([^\']+)\'', text or "")
     if match:
@@ -374,11 +479,29 @@ def _extract_sentiment_text(text):
 def _format_nlp_answer(user_text, tool_trace):
     results = [
         r for r in _tool_results(tool_trace, "nlp_tools")
-        if r.get("operation") == "classify_sentiment" and not r.get("error")
+        if not r.get("error")
     ]
     if not results:
         return None
     result = results[-1]
+    operation = result.get("operation")
+    if operation == "translate":
+        return (
+            f"Tłumaczenie ({result.get('src')} -> {result.get('tgt')}): "
+            f"{result.get('translation')}"
+        )
+    if operation == "summarize":
+        return f"Podsumowanie:\n{result.get('summary')}"
+    if operation == "extract_entities":
+        entities = result.get("entities") or []
+        if not entities:
+            return "Nie znaleziono encji."
+        lines = ["Encje:"]
+        for entity in entities[:20]:
+            lines.append(f"- {entity.get('text')} ({entity.get('label')})")
+        return "\n".join(lines)
+    if operation != "classify_sentiment":
+        return None
     confidence = result.get("confidence")
     if isinstance(confidence, (int, float)):
         conf_text = f"{confidence:.2f}"
@@ -396,6 +519,78 @@ def _extract_expression(text):
     )
     expr = expr.strip().strip(" ?.")
     return expr
+
+
+_TARGET_LANGUAGE_ALIASES = {
+    "angielski": "en",
+    "angielsku": "en",
+    "english": "en",
+    "polski": "pl",
+    "polsku": "pl",
+    "polish": "pl",
+    "niemiecki": "de",
+    "niemiecku": "de",
+    "german": "de",
+    "francuski": "fr",
+    "francusku": "fr",
+    "french": "fr",
+    "hiszpanski": "es",
+    "hiszpansku": "es",
+    "hiszpański": "es",
+    "hiszpańsku": "es",
+    "spanish": "es",
+}
+
+
+def _looks_like_translation(text):
+    folded = _fold(text)
+    return any(k in folded for k in ("przetlumacz", "przetłumacz", "translate"))
+
+
+def _extract_translation_target(text):
+    folded = _fold(text)
+    match = re.search(r"\b(?:na|to)\s+([a-ząćęłńóśźż]+)", folded)
+    if match:
+        return _TARGET_LANGUAGE_ALIASES.get(match.group(1), match.group(1))
+    return None
+
+
+def _extract_translation_text(text):
+    quoted = _extract_quoted_text(text)
+    if quoted:
+        return quoted
+    cleaned = re.sub(
+        r"(?i)\b(przet[lł]umacz|translate)\b",
+        "",
+        text or "",
+    )
+    cleaned = re.sub(r"(?i)\b(?:na|to)\s+[a-ząćęłńóśźż]+\b", "", cleaned)
+    return cleaned.strip(" .,!?:;\"'()[]{}")
+
+
+def _looks_like_summary(text):
+    folded = _fold(text)
+    return any(
+        k in folded
+        for k in ("podsumuj", "stresc", "streść", "summarize", "summary")
+    )
+
+
+def _extract_summary_length(text):
+    folded = _fold(text)
+    if any(k in folded for k in ("krotk", "short")):
+        return "short"
+    if any(k in folded for k in ("dlug", "dług", "long")):
+        return "long"
+    return "medium"
+
+
+def _looks_like_entity_extraction(text):
+    folded = _fold(text)
+    return any(k in folded for k in (
+        "wyciagnij encje", "wyciągnij encje", "znajdz encje",
+        "znajdź encje", "extract entities", "ner",
+    ))
 
 
 def _looks_like_datetime(text):
@@ -503,6 +698,49 @@ def _fallback_tool_calls(user_text, tool_trace):
                 "text": text,
                 "language": "auto",
             }))
+
+    if _looks_like_translation(user_text) and not _already_called(tool_trace, "nlp_tools"):
+        text = _extract_translation_text(user_text)
+        target = _extract_translation_target(user_text) or "en"
+        if text:
+            calls.append(("nlp_tools", {
+                "operation": "translate",
+                "text": text,
+                "target_language": target,
+                "language": "auto",
+            }))
+
+    if _looks_like_summary(user_text) and not _already_called(tool_trace, "nlp_tools"):
+        text = _extract_quoted_text(user_text) or user_text
+        calls.append(("nlp_tools", {
+            "operation": "summarize",
+            "text": text,
+            "summary_type": (
+                "bullets" if "bullet" in _fold(user_text)
+                else "abstractive"
+            ),
+            "length": _extract_summary_length(user_text),
+        }))
+
+    if (
+        _looks_like_entity_extraction(user_text)
+        and not _already_called(tool_trace, "nlp_tools")
+    ):
+        text = _extract_quoted_text(user_text) or user_text
+        calls.append(("nlp_tools", {
+            "operation": "extract_entities",
+            "text": text,
+            "language": "auto",
+        }))
+
+    if (
+        _looks_like_local_kb(user_text)
+        and not _already_called(tool_trace, "local_knowledge")
+    ):
+        calls.append((
+            "local_knowledge",
+            {"query": _extract_local_kb_query(user_text)},
+        ))
 
     if _looks_like_datetime(user_text) and not _already_called(tool_trace, "datetime_now"):
         city = _extract_datetime_city(user_text)

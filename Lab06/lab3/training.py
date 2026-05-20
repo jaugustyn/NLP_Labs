@@ -4,6 +4,7 @@ import os
 import pickle
 import time
 
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
@@ -82,34 +83,28 @@ def train_neural_model(
 
     start = time.time()
 
-    # Preprocess
     progress("Cleaning texts...")
-    cleaned = [clean_text(t) for t in texts]
+    cleaned = [clean_text(text) for text in texts]
 
-    # Encode labels
-    le = LabelEncoder()
-    le.fit(label_names)
-    y = le.transform([label_names[l] for l in labels])
+    label_encoder = LabelEncoder()
+    label_encoder.fit(label_names)
+    y = label_encoder.transform(_labels_to_names(labels, label_names))
     num_classes = len(label_names)
 
-    # Tokenizer
     progress("Building tokenizer...")
     tokenizer = build_tokenizer(cleaned, MAX_VOCAB_SIZE)
-    vocab_size = min(len(tokenizer.word_index) + 1, MAX_VOCAB_SIZE)
+    vocab_size = max(2, min(len(tokenizer.word_index) + 1, MAX_VOCAB_SIZE))
 
-    # Pad
     X = texts_to_padded(tokenizer, cleaned, max_len)
 
-    # Split
     X_train, X_val, y_train, y_val = train_test_split(
         X,
         y,
         test_size=0.2,
         random_state=42,
-        stratify=y,
+        stratify=_stratify_or_none(y),
     )
 
-    # Build
     progress(
         f"Building {model_type.upper()} "
         f"(max_len={max_len}, vocab={vocab_size}, classes={num_classes})..."
@@ -122,21 +117,37 @@ def train_neural_model(
         num_classes,
     )
 
-    # Train
+    from tensorflow.keras.callbacks import EarlyStopping
+
+    patience = max(1, EPOCHS // 10)
     progress(f"Training for {EPOCHS} epochs...")
     history = model.fit(
-        X_train, y_train,
+        X_train,
+        y_train,
         validation_data=(X_val, y_val),
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
+        callbacks=[
+            EarlyStopping(
+                monitor="val_loss",
+                patience=patience,
+                restore_best_weights=True,
+            )
+        ],
         verbose=0,
     )
 
     duration = time.time() - start
 
-    # Save
     prefix = f"{model_type}_{dataset_name}"
-    paths = _save_artifacts(prefix, model, tokenizer, le, max_len, num_classes)
+    paths = _save_artifacts(
+        prefix,
+        model,
+        tokenizer,
+        label_encoder,
+        max_len,
+        num_classes,
+    )
 
     val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
 
@@ -166,8 +177,24 @@ def train_neural_model(
     return result
 
 
+def _labels_to_names(labels, label_names):
+    names = []
+    for label in labels:
+        if isinstance(label, (int, np.integer)):
+            names.append(label_names[int(label)])
+        else:
+            names.append(str(label))
+    return names
+
+
+def _stratify_or_none(labels):
+    unique, counts = np.unique(labels, return_counts=True)
+    if len(unique) < 2 or counts.min() < 2:
+        return None
+    return labels
+
+
 def _save_artifacts(prefix, model, tokenizer, label_encoder, max_len, num_classes):
-    """Save model .h5, tokenizer .pkl, label_encoder .pkl, meta .pkl."""
     model_path = os.path.join(MODELS_DIR, f"{prefix}.h5")
     tok_path = os.path.join(MODELS_DIR, f"{prefix}_tokenizer.pkl")
     enc_path = os.path.join(MODELS_DIR, f"{prefix}_label_encoder.pkl")

@@ -1,6 +1,6 @@
 # NLP Bot (Lab06)
 
-Unified Telegram bot for all course labs (Lab01-Lab06).
+Unified Telegram bot for all labs (Lab01-Lab06).
 
 This version includes:
 
@@ -18,12 +18,12 @@ Command registration is split by lab modules and aggregated centrally:
 - Global command router: `commands.py`
 - Global handlers only: `/start`, `/help`
 - Per-lab handlers:
-    - `lab1/commands.py`
-    - `lab2/commands.py`
-    - `lab3/commands.py`
-    - `lab4/commands.py`
-    - `lab5/commands.py`
-    - `lab6/commands.py`
+  - `lab1/commands.py`
+  - `lab2/commands.py`
+  - `lab3/commands.py`
+  - `lab4/commands.py`
+  - `lab5/commands.py`
+  - `lab6/commands.py`
 
 This means each lab owns its own commands, while root `commands.py` only composes help and registers all labs.
 
@@ -153,7 +153,7 @@ Supported methods:
 ### Lab 3
 
 - `/sentiment method=<m> text="..." [dataset=<d>]`
-- `/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom>`
+- `/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom> [max_len=<100|150|200|300>]`
 - `/compare dataset=<amazon|imdb|custom> methods=<m1,m2,...>`
 - `/add_sentiment "text" "label"`
 - `/models`
@@ -169,6 +169,10 @@ Sentiment methods include:
 - `simplernn`
 - `lstm`
 - `gru`
+
+`/add_sentiment` stores the full quoted text as one record with the selected label.
+For sequence models, `max_len` can be varied between `100`, `150`, `200` and `300`
+to compare how much context helps the model.
 
 ### Lab 4
 
@@ -228,9 +232,10 @@ Main flow in `lab6/moderation/pipeline.py`:
 3. Qwen-Guard style risk recommendation
 4. Sentiment context
 5. Entity extraction context
-6. Ensemble decision (`APPROVE`, `REJECT`, `FLAG_FOR_REVIEW`)
-7. Action execution through tool layer
-8. CSV persistence and analytics update
+6. Similar previous moderation cases
+7. Ensemble decision (`APPROVE`, `REJECT`, `FLAG_FOR_REVIEW`)
+8. Action execution through tool layer
+9. CSV persistence and analytics update
 
 Moderation action tools include:
 
@@ -241,6 +246,14 @@ Moderation action tools include:
 - `add_to_watchlist`
 - `get_user_moderation_history`
 - `find_similar_violations`
+- `add_feedback`
+- `train_on_feedback`
+
+Offline Lab6 smoke test:
+
+```bash
+python -m lab6._smoke_moderation
+```
 
 ## Outputs and Data Files
 
@@ -248,10 +261,15 @@ Generated artifacts are saved to:
 
 - `cache/sessions/` - agent chat sessions and run traces
 - `cache/nel_cache.json` - NEL cache
+- `lab2plots/` - Lab2 word clouds, embedding plots and confusion matrices
+- `lab3/lab3plots/` - Lab3 confusion matrices, training history and comparison plots
 - `lab4plots/` - Lab4 plots (including knowledge graph PNG)
 - `lab4results/summaries/` - saved summaries
 - `results/lab2results.csv` - Lab2 experiment results
+- `results/lab2_feature_importance.txt` - Lab2 feature importance report
+- `results/lab2_similar_words.txt` - Lab2 similar words report
 - `lab3/results/lab3results.csv` - Lab3 comparison/training results
+- `lab3/models/` - Lab3 `.h5` neural models and tokenizer/encoder artifacts
 - `moderation_data/moderation_log.csv`
 - `moderation_data/moderation_actions.csv`
 - `moderation_data/user_moderation_history.csv`

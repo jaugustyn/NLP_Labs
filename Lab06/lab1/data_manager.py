@@ -8,6 +8,24 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(_DIR, "sentences.json")
 
 
+def _backup_data_file(reason):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = f"{DATA_FILE}.{reason}_{timestamp}.bak"
+    try:
+        os.replace(DATA_FILE, backup_path)
+    except OSError:
+        pass
+
+
+def _is_valid_record(record):
+    return (
+        isinstance(record, dict)
+        and set(record) == {"text", "class"}
+        and isinstance(record.get("text"), str)
+        and isinstance(record.get("class"), str)
+    )
+
+
 def load_records():
     if not os.path.exists(DATA_FILE):
         return []
@@ -17,16 +35,16 @@ def load_records():
             content = f.read().strip()
             if not content:
                 return []
-            return json.loads(content)
+            records = json.loads(content)
     except json.JSONDecodeError:
-        # Keep malformed file as backup to avoid silent data loss
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = f"{DATA_FILE}.corrupt_{timestamp}.bak"
-        try:
-            os.replace(DATA_FILE, backup_path)
-        except OSError:
-            pass
+        _backup_data_file("corrupt")
         return []
+
+    if not isinstance(records, list) or not all(_is_valid_record(r) for r in records):
+        _backup_data_file("invalid")
+        return []
+
+    return records
 
 
 def save_record(text, text_class):

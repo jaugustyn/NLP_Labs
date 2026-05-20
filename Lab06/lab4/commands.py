@@ -4,8 +4,9 @@ import re
 import time
 
 from config import (
-    SUPPORTED_LANGUAGES,
     NER_METHODS,
+    SPACY_MODELS,
+    SUPPORTED_LANGUAGES,
     SUPPORTED_TRANSLATION_PAIRS,
     SUMMARY_TYPES,
     SUMMARY_LENGTHS,
@@ -51,8 +52,17 @@ HELP_SECTION = (
 
 def _resolve_lang(text, requested):
     if requested and requested != "auto":
-        return requested
+        return requested.lower()
     return language_detect.detect_language(text)
+
+
+def _resolve_ner_lang(text, requested, method):
+    lang = _resolve_lang(text, requested)
+    if method == "spacy" and lang not in SPACY_MODELS:
+        return "en"
+    if lang not in SUPPORTED_LANGUAGES:
+        return "en"
+    return lang
 
 
 def _get_lang_param(params):
@@ -69,6 +79,16 @@ def _format_entities_with_offsets(entities, max_items=50):
             f"- {e['text']} ({e['label']}) [{e['start']}:{e['end']}]"
         )
     return "\n".join(lines)
+
+
+def _safe_extract_entities(text, method="spacy", lang="en"):
+    return ner_mod.extract_entities(text, method=method, lang=lang, allow_fallback=True)
+
+
+def _format_supported_pairs():
+    return ", ".join(
+        f"{source}->{target}" for source, target in SUPPORTED_TRANSLATION_PAIRS
+    )
 
 
 # =====================================================================
@@ -126,17 +146,19 @@ def _handle_ner(bot, message):
             )
             return
 
-        lang = _resolve_lang(text, _get_lang_param(params))
-        if lang not in SUPPORTED_LANGUAGES:
+        requested_lang = _get_lang_param(params)
+        detected_lang = _resolve_lang(text, requested_lang)
+        lang = _resolve_ner_lang(text, requested_lang, method)
+        if detected_lang != lang:
             bot.reply_to(
                 message,
-                f"Language '{lang}' not supported. Falling back to 'en'."
+                f"Language '{detected_lang}' is not supported for {method}. "
+                "Falling back to 'en'.",
             )
-            lang = "en"
 
         bot.reply_to(message, f"Running NER ({method}, language={lang})...")
         t0 = time.time()
-        entities = ner_mod.extract_entities(text, method=method, lang=lang)
+        entities = _safe_extract_entities(text, method=method, lang=lang)
         elapsed = format_duration(time.time() - t0)
 
         bot.send_message(
@@ -169,13 +191,13 @@ def _handle_nel(bot, message):
             )
             return
 
-        lang = _resolve_lang(text, _get_lang_param(params))
+        lang = _resolve_ner_lang(text, _get_lang_param(params), "spacy")
         bot.reply_to(
             message,
             f"Running NER + Wikidata candidate search (language={lang})..."
         )
 
-        entities = ner_mod.extract_entities(text, method="spacy", lang=lang)
+        entities = _safe_extract_entities(text, method="spacy", lang=lang)
         if not entities:
             # Treat the whole text as a single entity name (spec example)
             entities = [{"text": text, "label": "MISC",
@@ -272,18 +294,16 @@ def _handle_analyze_entities(bot, message):
             return
 
         link_flag = params.get("link", "true").lower() != "false"
-        lang = _resolve_lang(text, _get_lang_param(params))
+        lang = _resolve_ner_lang(text, _get_lang_param(params), "spacy")
         bot.reply_to(
             message,
             f"Full entity analysis (language={lang}, link={link_flag})..."
         )
         t0 = time.time()
 
-        spacy_ents = ner_mod.extract_entities(text, method="spacy", lang=lang)
+        spacy_ents = _safe_extract_entities(text, method="spacy", lang=lang)
         try:
-            stanza_ents = ner_mod.extract_entities(
-                text, method="stanza", lang=lang
-            )
+            stanza_ents = _safe_extract_entities(text, method="stanza", lang=lang)
         except Exception:
             stanza_ents = []
         merged = ner_mod.merge_entities(spacy_ents, stanza_ents)
@@ -333,9 +353,7 @@ def _handle_translate(bot, message):
         params = parse_params(message.text)
         text = params.get("text")
         if not text:
-            pairs = ", ".join(
-                f"{a}->{b}" for a, b in SUPPORTED_TRANSLATION_PAIRS
-            )
+            pairs = _format_supported_pairs()
             bot.reply_to(
                 message,
                 "Usage: /translate text=\"your text\" "
@@ -368,6 +386,13 @@ def _handle_translate(bot, message):
                 message.chat.id,
                 f"Source: {src}\nTarget: {tgt}\nTranslation: {text}\n"
                 "(source language equals target)"
+            )
+            return
+        if not translation_mod.validate_pair(src, tgt):
+            bot.reply_to(
+                message,
+                f"Unsupported translation pair: {src}->{tgt}\n"
+                f"Supported pairs: {_format_supported_pairs()}",
             )
             return
 
@@ -505,13 +530,13 @@ def _handle_knowledge_graph(bot, message):
             )
             return
 
-        lang = _resolve_lang(text, _get_lang_param(params))
+        lang = _resolve_ner_lang(text, _get_lang_param(params), "spacy")
         bot.reply_to(message, f"Building knowledge graph (language={lang})...")
 
         sentences = [s for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
         per_sentence = []
         for sentence in sentences:
-            ents = ner_mod.extract_entities(sentence, method="spacy", lang=lang)
+            ents = _safe_extract_entities(sentence, method="spacy", lang=lang)
             linked = nel_mod.link_entities(ents, lang=lang)
             per_sentence.append(linked)
 

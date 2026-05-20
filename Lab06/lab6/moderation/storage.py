@@ -149,6 +149,9 @@ def append_action(
 
 
 def append_watchlist(user_id, reason):
+    for row in list_watchlist():
+        if row.get("user_id") == user_id:
+            return
     _append_row(
         WATCHLIST,
         WATCHLIST_FIELDS,
@@ -282,6 +285,10 @@ def rebuild_user_history():
 
 
 def find_similar(text, limit=5):
+    try:
+        limit = int(limit or 5)
+    except (TypeError, ValueError):
+        limit = 5
     words = set(re.findall(r"\w+", (text or "").lower()))
     hits = []
     for row in _read_rows(MODERATION_LOG):
@@ -300,7 +307,7 @@ def find_similar(text, limit=5):
                 }
             )
     hits.sort(key=lambda item: item["score"], reverse=True)
-    return hits[:max(1, min(int(limit or 5), 20))]
+    return hits[:max(1, min(limit, 20))]
 
 
 def analytics():

@@ -1,6 +1,7 @@
 """Core text preprocessing helpers for Lab 1."""
 
 import os
+import re
 import string
 from collections import Counter
 
@@ -49,6 +50,7 @@ STEM_SUFFIXES = sorted(
 )
 
 PUNCT = set(string.punctuation)
+_TOKEN_STRIP_CHARS = '.,!?;:()[]"\'-'
 
 
 def get_nlp():
@@ -60,6 +62,10 @@ def get_nlp():
             # Keep bot functional even when full model is missing
             _NLP = spacy.blank("pl")
     return _NLP
+
+
+def uses_blank_pipeline():
+    return not get_nlp().pipe_names
 
 
 def load_stopwords():
@@ -76,6 +82,23 @@ PL_STOPWORDS = load_stopwords()
 def tokenize_text(text):
     doc = get_nlp()(text)
     return [token.text for token in doc if not token.is_space]
+
+
+def clean_text(text):
+    """Normalize whitespace and strip punctuation-heavy noise."""
+    text = re.sub(r"\s+", " ", text or "").strip()
+    return text.strip(_TOKEN_STRIP_CHARS)
+
+
+def clean_tokens(tokens, lowercase=False):
+    """Remove punctuation tokens and empty values."""
+    clean = []
+    for token in tokens:
+        value = token.strip(_TOKEN_STRIP_CHARS)
+        if not value:
+            continue
+        clean.append(value.lower() if lowercase else value)
+    return clean
 
 
 def remove_stopwords(tokens):
@@ -119,6 +142,10 @@ def get_ngrams(tokens, n=2):
     return list(nltk.ngrams(tokens, n))
 
 
+def format_ngrams(ngrams):
+    return [" ".join(items) for items in ngrams]
+
+
 def bag_of_words(text):
     try:
         vectorizer = CountVectorizer()
@@ -138,17 +165,18 @@ def tf_idf(text):
 
 
 def run_task(task_name, text):
-    tokens = tokenize_text(text)
+    cleaned_text = clean_text(text)
+    tokens = tokenize_text(cleaned_text)
 
     if task_name == "tokenize":
         return tokens
 
-    tokens = remove_stopwords(tokens)
+    tokens = remove_stopwords(clean_tokens(tokens))
 
     if task_name == "remove_stopwords":
         return tokens
     if task_name == "lemmatize":
-        return lemmatize(text)
+        return lemmatize(cleaned_text)
     if task_name == "stemming":
         return stemming(tokens)
     if task_name == "stats":

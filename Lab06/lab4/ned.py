@@ -9,7 +9,7 @@ from config import (
     HTTP_TIMEOUT,
     HTTP_USER_AGENT,
 )
-from lab4.nel import search_wikidata
+from lab4.nel import local_wikipedia_url, search_candidates
 
 _HEADERS = {"User-Agent": HTTP_USER_AGENT}
 
@@ -101,7 +101,7 @@ def disambiguate(name, context, lang="en", top_k=NEL_TOP_K):
         contain `name` (e.g. 'Paris Hilton' when name='Paris').
     Phrase-level matches are heavily boosted in scoring.
     """
-    candidates = list(search_wikidata(name, lang=lang, limit=top_k) or [])
+    candidates = list(search_candidates(name, lang=lang, limit=top_k) or [])
     if candidates and "error" in candidates[0]:
         return candidates
 
@@ -115,7 +115,7 @@ def disambiguate(name, context, lang="en", top_k=NEL_TOP_K):
     phrase_set_lower = {p.lower() for p in phrases}
     seen_qids = {c.get("qid") for c in candidates if c.get("qid")}
     for phrase in phrases:
-        extra = search_wikidata(phrase, lang=lang, limit=3) or []
+        extra = search_candidates(phrase, lang=lang, limit=3) or []
         if extra and "error" in extra[0]:
             continue
         for c in extra:
@@ -215,5 +215,7 @@ def get_wikipedia_url(qid, lang="en"):
         return _wiki_cache[key]
     details = get_entity_details(qid, lang=lang)
     url = details.get("wikipedia_url", "") if "error" not in details else ""
+    if not url:
+        url = local_wikipedia_url(qid)
     _wiki_cache[key] = url
     return url

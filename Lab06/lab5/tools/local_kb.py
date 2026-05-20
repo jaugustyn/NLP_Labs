@@ -16,9 +16,10 @@ from config import (
 )
 
 
-_LAB1_SENTENCES = os.path.normpath(
-    os.path.join(BASE_DIR, "..", "Lab01", "sentences.json")
-)
+_LAB1_SENTENCES_CANDIDATES = [
+    os.path.join(BASE_DIR, "lab1", "sentences.json"),
+    os.path.normpath(os.path.join(BASE_DIR, "..", "Lab01", "sentences.json")),
+]
 
 
 def _tokenize(s):
@@ -87,10 +88,14 @@ def _search_summaries(query_tokens):
 
 
 def _search_lab1_sentences(query_tokens):
-    if not os.path.exists(_LAB1_SENTENCES):
+    data_path = next(
+        (path for path in _LAB1_SENTENCES_CANDIDATES if os.path.exists(path)),
+        None,
+    )
+    if not data_path:
         return []
     try:
-        with open(_LAB1_SENTENCES, "r", encoding="utf-8") as f:
+        with open(data_path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception:
         return []

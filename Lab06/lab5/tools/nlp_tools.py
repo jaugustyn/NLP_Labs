@@ -193,6 +193,16 @@ def nlp_tools(
                 "translation": text,
                 "note": "src == tgt, no-op",
             }
+        if (
+            hasattr(translation, "validate_pair")
+            and not translation.validate_pair(src, tgt)
+        ):
+            return {
+                "operation": "translate",
+                "src": src,
+                "tgt": tgt,
+                "error": f"Unsupported translation pair: {src}->{tgt}",
+            }
         try:
             out = translation.translate(text, src, tgt)
             return {
@@ -223,7 +233,7 @@ def nlp_tools(
     if operation == "extract_entities":
         lang = _resolve_lang(text, language)
         try:
-            ents = ner.extract_entities_spacy(text, lang=lang)
+            ents = ner.extract_entities(text, method="spacy", lang=lang)
             return {
                 "operation": "extract_entities",
                 "language": lang,

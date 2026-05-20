@@ -83,6 +83,25 @@ WATCHLIST_SCHEMA = _schema(
     },
     ["user_id", "reason"],
 )
+FEEDBACK_SCHEMA = _schema(
+    "add_feedback",
+    "Record a human moderator override for a moderation decision.",
+    {
+        "content_id": {"type": "string"},
+        "moderator_override": {
+            "type": "string",
+            "enum": ["APPROVE", "REJECT", "FLAG_FOR_REVIEW"],
+        },
+        "comment": {"type": "string"},
+    },
+    ["content_id", "moderator_override"],
+)
+TRAIN_FEEDBACK_SCHEMA = _schema(
+    "train_on_feedback",
+    "Prepare saved human feedback as local training data.",
+    {},
+    [],
+)
 
 
 TOOL_SPECS = {
@@ -102,4 +121,9 @@ TOOL_SPECS = {
         SIMILAR_SCHEMA,
     ),
     "add_to_watchlist": (actions.add_to_watchlist, WATCHLIST_SCHEMA),
+    "add_feedback": (actions.add_feedback, FEEDBACK_SCHEMA),
+    "train_on_feedback": (
+        actions.train_on_feedback,
+        TRAIN_FEEDBACK_SCHEMA,
+    ),
 }

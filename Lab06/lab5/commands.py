@@ -42,10 +42,15 @@ def _format_trace(trace, max_arg_len=200):
     out = []
     for step in trace:
         args_repr = json.dumps(step.get("arguments", {}), ensure_ascii=False)
-        out.append(
+        line = (
             f"  [{step.get('iteration')}] "
             f"{step.get('tool')}({truncate(args_repr, max_arg_len)})"
         )
+        result = step.get("result")
+        if result is not None:
+            result_repr = json.dumps(result, ensure_ascii=False)
+            line += f" -> {truncate(result_repr, 220)}"
+        out.append(line)
     return "\n".join(out)
 
 
@@ -262,6 +267,14 @@ def _handle_agent_history(bot, message):
         lines.append(f"  Q: {truncate(run.get('user', ''), 120)}")
         lines.append(f"  A: {truncate(run.get('answer', ''), 200)}")
         lines.append(f"  tools: {tools_used or '(none)'}")
+        for tool_call in (run.get("tool_trace") or [])[:3]:
+            result = tool_call.get("result")
+            if result is not None:
+                result_repr = json.dumps(result, ensure_ascii=False)
+                lines.append(
+                    f"    {tool_call.get('tool')}: "
+                    f"{truncate(result_repr, 160)}"
+                )
         lines.append("")
 
     _send_long(bot, message.chat.id, "\n".join(lines))
