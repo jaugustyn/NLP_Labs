@@ -5,7 +5,7 @@ import re
 from lab6.moderation import actions as moderation_actions
 from lab6.moderation import pipeline as moderation_pipeline
 from lab6.moderation import storage as moderation_storage
-from utils import parse_params, truncate
+from utils import extract_first_quoted, extract_param_value, parse_params, truncate
 
 
 HELP_SECTION = (
@@ -39,52 +39,14 @@ def _command_rest(message):
     return parts[1] if len(parts) > 1 else ""
 
 
-def _extract_text_param(rest):
-    match = re.search(r"(?<!\w)text\s*=", rest or "", flags=re.IGNORECASE)
-    if not match:
-        return None
-
-    value = rest[match.end():].strip()
-    if not value:
-        return ""
-
-    if value[0] in ("\"", "'"):
-        return _read_quoted_value(value).strip()
-
-    next_param = re.search(r"\s+\w+\s*=", value)
-    if next_param:
-        return value[:next_param.start()].strip()
-    return value.strip()
-
-
-def _read_quoted_value(value):
-    quote = value[0]
-    chars = []
-    escaped = False
-    for char in value[1:]:
-        if escaped:
-            chars.append(char)
-            escaped = False
-        elif char == "\\":
-            escaped = True
-        elif char == quote:
-            return "".join(chars)
-        else:
-            chars.append(char)
-    if escaped:
-        chars.append("\\")
-    return "".join(chars)
-
-
 def _extract_command_text(rest):
-    text = _extract_text_param(rest)
+    text = extract_param_value(rest, "text")
     if text is not None:
         return text
 
-    quoted = re.findall(r'"([^"]*)"|\'([^\']*)\'', rest or "")
-    if quoted:
-        first = quoted[0]
-        return (first[0] or first[1] or "").strip()
+    quoted = extract_first_quoted(rest)
+    if quoted is not None:
+        return quoted
 
     params = parse_params(rest)
     return params.get("text") or rest.strip()

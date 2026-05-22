@@ -187,10 +187,3 @@ def merge_entities(*entity_lists):
             if key not in seen:
                 seen[key] = entity
     return sorted(seen.values(), key=lambda item: (item["start"], item["end"]))
-
-
-def group_by_label(entities):
-    grouped = {}
-    for entity in entities:
-        grouped.setdefault(entity["label"], []).append(entity["text"])
-    return grouped

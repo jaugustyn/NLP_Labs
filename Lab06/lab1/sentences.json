@@ -470,5 +470,13 @@
   {
     "text": "Polecam go znajomym!",
     "class": "pozytywny"
+  },
+  {
+    "text": "To jest prosty tekst do analizy NLP.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Ala ma kota i kot ma Alę.",
+    "class": "neutralny"
   }
 ]

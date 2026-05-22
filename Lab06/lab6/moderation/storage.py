@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 
 from lab6.config import MODERATION_DATA_DIR
+from utils import log_error
 
 
 MODERATION_LOG = os.path.join(MODERATION_DATA_DIR, "moderation_log.csv")
@@ -71,31 +72,56 @@ ACTION_FIELDS = [
 WATCHLIST_FIELDS = ["timestamp", "user_id", "reason", "active"]
 
 
+def _storage_files():
+    return {
+        MODERATION_LOG: MODERATION_FIELDS,
+        USER_HISTORY: USER_FIELDS,
+        FEEDBACK_LOG: FEEDBACK_FIELDS,
+        TRAIN_DATA: TRAIN_FIELDS,
+        ACTION_LOG: ACTION_FIELDS,
+        WATCHLIST: WATCHLIST_FIELDS,
+    }
+
+
 def now_iso():
     return datetime.now().isoformat(timespec="seconds")
 
 
 def ensure_storage():
     os.makedirs(MODERATION_DATA_DIR, exist_ok=True)
-    for path, fields in (
-        (MODERATION_LOG, MODERATION_FIELDS),
-        (USER_HISTORY, USER_FIELDS),
-        (FEEDBACK_LOG, FEEDBACK_FIELDS),
-        (TRAIN_DATA, TRAIN_FIELDS),
-        (ACTION_LOG, ACTION_FIELDS),
-        (WATCHLIST, WATCHLIST_FIELDS),
-    ):
+    for path, fields in _storage_files().items():
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8", newline="") as f:
                 csv.DictWriter(f, fieldnames=fields).writeheader()
+
+
+def _backup_file(path, reason):
+    if not os.path.exists(path):
+        return
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = f"{path}.{reason}_{timestamp}.bak"
+    try:
+        os.replace(path, backup_path)
+    except OSError as e:
+        log_error(f"moderation.storage.backup:{os.path.basename(path)}", e)
 
 
 def _read_rows(path):
     ensure_storage()
     try:
         with open(path, "r", encoding="utf-8", newline="") as f:
-            return list(csv.DictReader(f))
-    except Exception:
+            reader = csv.DictReader(f)
+            expected_fields = _storage_files().get(path)
+            if expected_fields and reader.fieldnames != expected_fields:
+                raise ValueError(
+                    "Unexpected CSV header in "
+                    f"{os.path.basename(path)}: {reader.fieldnames!r}"
+                )
+            return list(reader)
+    except Exception as e:
+        log_error(f"moderation.storage.read:{os.path.basename(path)}", e)
+        _backup_file(path, "invalid")
+        ensure_storage()
         return []
 
 

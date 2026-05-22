@@ -27,7 +27,13 @@ from lab3.model_loader import find_model_for_method, list_models
 from lab3.preprocessing import clean_text
 from lab3.sentiment_methods import predict_sentiment, train_sklearn_sentiment_model
 from lab3.training import train_neural_model
-from utils import extract_quoted_args, format_duration, log_error, parse_params
+from utils import (
+    extract_param_value,
+    extract_quoted_args,
+    format_duration,
+    log_error,
+    parse_params,
+)
 
 
 HELP_SECTION = (
@@ -75,7 +81,9 @@ def _handle_sentiment(bot, message):
         params = parse_params(message.text)
         method = params.get("method")
         method = method.lower() if method else None
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
 
         if not method and not text:
             bot.reply_to(

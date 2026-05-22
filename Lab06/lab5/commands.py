@@ -2,14 +2,13 @@
 
 import json
 import os
-import re
 import tempfile
 
 from lab5 import ollama_client
 from lab5 import session_store
 from lab5 import tools as tools_mod
 from lab5.agent import Agent
-from utils import log_error, parse_params, truncate
+from utils import extract_param_value, log_error, parse_params, truncate
 
 
 HELP_SECTION = (
@@ -97,46 +96,8 @@ def _is_command_message(message):
     return _message_text(message).startswith("/")
 
 
-def _extract_text_param(rest):
-    """Extract text=... robustly, including an unclosed quote."""
-    match = re.search(r"(?<!\w)text\s*=", rest or "", flags=re.IGNORECASE)
-    if not match:
-        return None
-
-    value = rest[match.end():].strip()
-    if not value:
-        return ""
-
-    if value[0] in ("\"", "'"):
-        return _read_quoted_value(value).strip()
-
-    next_param = re.search(r"\s+\w+\s*=", value)
-    if next_param:
-        return value[:next_param.start()].strip()
-    return value.strip()
-
-
-def _read_quoted_value(value):
-    quote = value[0]
-    chars = []
-    escaped = False
-    for char in value[1:]:
-        if escaped:
-            chars.append(char)
-            escaped = False
-        elif char == "\\":
-            escaped = True
-        elif char == quote:
-            return "".join(chars)
-        else:
-            chars.append(char)
-    if escaped:
-        chars.append("\\")
-    return "".join(chars)
-
-
 def _extract_agent_text(rest):
-    text = _extract_text_param(rest)
+    text = extract_param_value(rest, "text")
     if text is not None:
         return text
 
@@ -367,9 +328,12 @@ def _handle_tool_datetime(bot, message):
 
 def _handle_tool_nlp(bot, message):
     parts = (message.text or "").split(maxsplit=1)
-    params = parse_params(parts[1] if len(parts) > 1 else "")
+    rest = parts[1] if len(parts) > 1 else ""
+    params = parse_params(rest)
     operation = params.get("operation") or params.get("op")
-    text = params.get("text")
+    text = extract_param_value(rest, "text")
+    if text is None:
+        text = params.get("text")
     if not operation or not text:
         bot.reply_to(
             message,

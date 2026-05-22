@@ -4,6 +4,7 @@ import os
 import time
 
 from config import SESSIONS_DIR, AGENT_HISTORY_TURNS
+from utils import log_error
 
 
 _MAX_RESULT_CHARS = 1200
@@ -30,7 +31,8 @@ def load_session(chat_id):
         data.setdefault("history", [])
         data.setdefault("runs", [])
         return data
-    except Exception:
+    except Exception as e:
+        log_error("session_store.load_session", e)
         return _empty()
 
 
@@ -39,8 +41,10 @@ def _save(chat_id, data):
     try:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+    except Exception as e:
+        log_error("session_store.save", e)
+        return False
+    return True
 
 
 def _compact_result(result):
@@ -49,7 +53,8 @@ def _compact_result(result):
         return {"truncated": True, "json": text[:_MAX_RESULT_CHARS] + "..."}
     try:
         return json.loads(text)
-    except Exception:
+    except Exception as e:
+        log_error("session_store.compact_result", e)
         return {"text": str(result)}
 
 
@@ -98,7 +103,8 @@ def reset_session(chat_id):
         try:
             os.remove(path)
             return True
-        except Exception:
+        except Exception as e:
+            log_error("session_store.reset_session", e)
             return False
     return True
 

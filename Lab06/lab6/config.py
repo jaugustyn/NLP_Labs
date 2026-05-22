@@ -2,5 +2,4 @@
 
 from config import MODERATION_DATA_DIR
 
-
-MODERATION_DEFAULT_MODERATOR_ID = "bot"
+__all__ = ["MODERATION_DATA_DIR"]

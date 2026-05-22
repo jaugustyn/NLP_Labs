@@ -1,8 +1,12 @@
 """Shared command parsing and formatting helpers."""
 
+import logging
 import re
 import shlex
-import traceback
+
+
+_PARAM_PATTERN = re.compile(r"(?<!\w)([A-Za-z_]\w*)\s*=")
+_QUOTED_PATTERN = re.compile(r'"([^"]*)"|\'([^\']*)\'')
 
 
 def parse_params(text):
@@ -29,14 +33,73 @@ def parse_params(text):
     if params:
         return params
 
-    for match in re.finditer(r'(\w+)=(?:"([^"]*)"|\'([^\']*)\'|(\S+))', text):
+    pos = 0
+    while True:
+        match = _PARAM_PATTERN.search(text, pos)
+        if not match:
+            break
         key = match.group(1).lower()
-        value = next(
-            group for group in match.groups()[1:]
-            if group is not None
-        )
+        value, pos = _read_param_value(text, match.end())
         params[key] = value
     return params
+
+
+def _read_param_value(text, start):
+    while start < len(text) and text[start].isspace():
+        start += 1
+    if start >= len(text):
+        return "", start
+    if text[start] in ("\"", "'"):
+        return _read_quoted_value(text, start)
+
+    next_param = _PARAM_PATTERN.search(text, start)
+    end = next_param.start() if next_param else len(text)
+    return text[start:end].strip(), end
+
+
+def _read_quoted_value(text, start):
+    quote = text[start]
+    chars = []
+    escaped = False
+    index = start + 1
+    while index < len(text):
+        char = text[index]
+        if escaped:
+            chars.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == quote:
+            return "".join(chars), index + 1
+        else:
+            chars.append(char)
+        index += 1
+    if escaped:
+        chars.append("\\")
+    return "".join(chars), len(text)
+
+
+def extract_param_value(text, key):
+    """Return a command parameter value, tolerating an unfinished quote."""
+    if not key:
+        return None
+    pattern = re.compile(
+        rf"(?<!\w){re.escape(key)}\s*=",
+        flags=re.IGNORECASE,
+    )
+    match = pattern.search(text or "")
+    if not match:
+        return None
+    value, _ = _read_param_value(text or "", match.end())
+    return value.strip()
+
+
+def extract_first_quoted(text):
+    """Return the first single- or double-quoted value from text."""
+    match = _QUOTED_PATTERN.search(text or "")
+    if not match:
+        return None
+    return (match.group(1) or match.group(2) or "").strip()
 
 
 def extract_quoted_args(text, count):
@@ -46,8 +109,16 @@ def extract_quoted_args(text, count):
 
 
 def log_error(context, error):
-    print(f"[ERROR] {context}: {type(error).__name__}: {error}")
-    print(traceback.format_exc())
+    exc_info = None
+    if isinstance(error, BaseException):
+        exc_info = (type(error), error, error.__traceback__)
+    logging.getLogger("nlp_labs").error(
+        "%s: %s: %s",
+        context,
+        type(error).__name__,
+        error,
+        exc_info=exc_info,
+    )
 
 
 def format_duration(seconds):

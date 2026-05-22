@@ -168,11 +168,6 @@ def reduce_for_visualization(X, labels, method):
     return reduce_dim(X, method), labels
 
 
-def plot_embedding_visualization(X, labels, label_names, method, filename):
-    X_2d, labels = reduce_for_visualization(X, labels, method)
-    return plot_embedding_2d(X_2d, labels, label_names, method, filename)
-
-
 def plot_embedding_2d(X_2d, labels, label_names, method, filename):
     ensure_dir()
     X_2d = _pad_components(X_2d, 2)

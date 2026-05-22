@@ -7,7 +7,7 @@ from config import (
     HTTP_TIMEOUT,
     HTTP_USER_AGENT,
 )
-from lab5.location_resolver import city_lookup_keys, geocode_city
+from lab5.location_resolver import geocode_city
 
 
 _HEADERS = {"User-Agent": HTTP_USER_AGENT}

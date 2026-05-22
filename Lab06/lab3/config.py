@@ -26,7 +26,6 @@ SENTIMENT_METHODS = [
     "simplernn", "lstm", "gru",
 ]
 NEURAL_MODELS = ["simplernn", "lstm", "gru"]
-ML_MODELS = ["nb", "rf"]
 
 # Datasets
 VALID_DATASETS = ["amazon", "imdb", "custom"]

@@ -8,13 +8,6 @@ from sklearn.neural_network import MLPClassifier
 
 ALL_MODELS = ("nb", "rf", "mlp", "logreg")
 
-MODEL_DISPLAY_NAMES = {
-    "nb": "Naive Bayes",
-    "rf": "Random Forest",
-    "mlp": "MLP",
-    "logreg": "Logistic Regression",
-}
-
 GRID_PARAMS = {
     "nb_multinomial": {"alpha": [0.1, 0.5, 1.0]},
     "nb_gaussian": {"var_smoothing": [1e-9, 1e-8, 1e-7]},

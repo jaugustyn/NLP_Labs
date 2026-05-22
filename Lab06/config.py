@@ -13,7 +13,6 @@ MODERATION_DATA_DIR = os.path.join(BASE_DIR, "moderation_data")
 NEL_CACHE_FILE = os.path.join(CACHE_DIR, "nel_cache.json")
 
 SUPPORTED_LANGUAGES = ["en", "pl", "de", "fr", "es"]
-DEFAULT_LANGUAGE = "en"
 
 NER_METHODS = ["spacy", "stanza"]
 SPACY_MODELS = {
@@ -67,8 +66,6 @@ HTTP_USER_AGENT = (
     "NLP-Lab4-Bot/1.0 "
     "(https://github.com/jaugustyn/NLP_Labs; educational use)"
 )
-
-KG_RELATIONS = ["founded", "works_for", "located_in", "belongs_to", "owns", "part_of"]
 
 OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
 

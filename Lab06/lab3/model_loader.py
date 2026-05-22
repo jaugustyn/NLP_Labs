@@ -5,7 +5,19 @@ import pickle
 from lab3.config import MODELS_DIR
 
 
+def _load_trusted_pickle(path):
+    """Load a pickle artifact generated locally by this project."""
+    with open(path, "rb") as file:
+        return pickle.load(file)
+
+
+def _save_pickle(path, data):
+    with open(path, "wb") as file:
+        pickle.dump(data, file)
+
+
 def load_neural_model(model_type, dataset_name):
+    """Load a locally trained neural model and trusted pickle artifacts."""
     prefix = f"{model_type}_{dataset_name}"
     model_path = os.path.join(MODELS_DIR, f"{prefix}.h5")
     if not os.path.exists(model_path):
@@ -28,32 +40,32 @@ def load_neural_model(model_type, dataset_name):
 
     model = load_model(model_path)
 
-    with open(tokenizer_path, "rb") as file:
-        tokenizer = pickle.load(file)
-    with open(encoder_path, "rb") as file:
-        label_encoder = pickle.load(file)
+    tokenizer = _load_trusted_pickle(tokenizer_path)
+    label_encoder = _load_trusted_pickle(encoder_path)
 
     meta = {}
     if os.path.exists(meta_path):
-        with open(meta_path, "rb") as file:
-            meta = pickle.load(file)
+        meta = _load_trusted_pickle(meta_path)
 
     return model, tokenizer, label_encoder, meta
 
 
 def load_sklearn_model(model_name, dataset_name):
+    """Load a locally trained sklearn artifact.
+
+    Pickle is intentionally limited to artifacts created by this project.
+    Do not place untrusted files in the models directory.
+    """
     path = os.path.join(MODELS_DIR, f"{model_name}_{dataset_name}_sklearn.pkl")
     if not os.path.exists(path):
         return None
-    with open(path, "rb") as file:
-        return pickle.load(file)
+    return _load_trusted_pickle(path)
 
 
 def save_sklearn_model(model_name, dataset_name, data):
     os.makedirs(MODELS_DIR, exist_ok=True)
     path = os.path.join(MODELS_DIR, f"{model_name}_{dataset_name}_sklearn.pkl")
-    with open(path, "wb") as file:
-        pickle.dump(data, file)
+    _save_pickle(path, data)
 
 
 def list_models():

@@ -7,13 +7,18 @@ from config import (
     NER_METHODS,
     SPACY_MODELS,
     SUPPORTED_LANGUAGES,
-    SUPPORTED_TRANSLATION_PAIRS,
     SUMMARY_TYPES,
     SUMMARY_LENGTHS,
     OLLAMA_MODEL,
     NEL_TOP_K,
 )
-from utils import parse_params, log_error, format_duration, truncate
+from utils import (
+    extract_param_value,
+    format_duration,
+    log_error,
+    parse_params,
+    truncate,
+)
 
 from lab4 import language_detect
 from lab4 import ner as ner_mod
@@ -87,7 +92,7 @@ def _safe_extract_entities(text, method="spacy", lang="en"):
 
 def _format_supported_pairs():
     return ", ".join(
-        f"{source}->{target}" for source, target in SUPPORTED_TRANSLATION_PAIRS
+        f"{source}->{target}" for source, target in translation_mod.supported_pairs()
     )
 
 
@@ -98,7 +103,9 @@ def _format_supported_pairs():
 def _handle_language_detect(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             bot.reply_to(
                 message,
@@ -125,7 +132,9 @@ def _handle_language_detect(bot, message):
 def _handle_ner(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             bot.reply_to(
                 message,
@@ -181,7 +190,9 @@ def _handle_ner(bot, message):
 def _handle_nel(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             bot.reply_to(
                 message,
@@ -279,7 +290,9 @@ def _handle_ned(bot, message):
 def _handle_analyze_entities(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             bot.reply_to(
                 message,
@@ -351,7 +364,9 @@ def _handle_analyze_entities(bot, message):
 def _handle_translate(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             pairs = _format_supported_pairs()
             bot.reply_to(
@@ -424,7 +439,9 @@ def _handle_translate(bot, message):
 def _handle_summarize(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             bot.reply_to(
                 message,
@@ -517,7 +534,9 @@ def _handle_summarize(bot, message):
 def _handle_knowledge_graph(bot, message):
     try:
         params = parse_params(message.text)
-        text = params.get("text")
+        text = extract_param_value(message.text, "text")
+        if text is None:
+            text = params.get("text")
         if not text:
             bot.reply_to(
                 message,

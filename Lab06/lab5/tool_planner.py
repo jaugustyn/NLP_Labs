@@ -4,6 +4,8 @@ import json
 import re
 from dataclasses import dataclass
 
+from lab4 import language_detect
+
 from .location_resolver import city_lookup_keys, fold_text
 
 
@@ -14,7 +16,6 @@ DEFAULT_TIMEZONE = "Europe/Warsaw"
 class PlannedToolCall:
     tool: str
     arguments: dict
-    reason: str = ""
 
 
 def _unique_tool_key(name, arguments):
@@ -65,6 +66,13 @@ def is_image_request(text):
 
 
 def language_is_polish(text):
+    try:
+        detected = language_detect.detect_language(text)
+    except Exception:
+        detected = "unknown"
+    if detected != "unknown":
+        return detected == "pl"
+
     folded = fold_text(text)
     return bool(re.search(r"[ąćęłńóśźż]", (text or "").lower())) or any(
         keyword in folded for keyword in (
@@ -420,9 +428,9 @@ class ToolPlanner:
         self._plan_web_fact(user_text, tool_trace, calls)
         return calls
 
-    def _append_once(self, calls, tool, arguments, reason, tool_trace):
+    def _append_once(self, calls, tool, arguments, tool_trace):
         if not already_called_equivalent(tool_trace, tool, arguments):
-            calls.append(PlannedToolCall(tool, arguments, reason))
+            calls.append(PlannedToolCall(tool, arguments))
 
     def _plan_weather(self, user_text, tool_trace, calls):
         if not looks_like_weather(user_text):
@@ -433,7 +441,6 @@ class ToolPlanner:
                 calls,
                 "get_weather",
                 {"city": city},
-                "weather_intent",
                 tool_trace,
             )
 
@@ -444,7 +451,6 @@ class ToolPlanner:
                 calls,
                 "web_search",
                 {"query": query, "language": language},
-                "weather_reference_search",
                 tool_trace,
             )
 
@@ -454,7 +460,6 @@ class ToolPlanner:
                 calls,
                 "calculator",
                 {"expression": extract_expression(user_text)},
-                "calculation_intent",
                 tool_trace,
             )
 
@@ -468,7 +473,7 @@ class ToolPlanner:
                     "operation": "classify_sentiment",
                     "text": text,
                     "language": "auto",
-                }, "sentiment_intent"))
+                }))
         elif looks_like_translation(user_text):
             text = extract_translation_text(user_text)
             target = extract_translation_target(user_text)
@@ -478,7 +483,7 @@ class ToolPlanner:
                     "text": text,
                     "target_language": target,
                     "language": "auto",
-                }, "translation_intent"))
+                }))
         elif looks_like_summary(user_text):
             text = extract_quoted_text(user_text) or user_text
             calls.append(PlannedToolCall("nlp_tools", {
@@ -489,14 +494,14 @@ class ToolPlanner:
                     else "abstractive"
                 ),
                 "length": extract_summary_length(user_text),
-            }, "summary_intent"))
+            }))
         elif looks_like_entity_extraction(user_text):
             text = extract_quoted_text(user_text) or user_text
             calls.append(PlannedToolCall("nlp_tools", {
                 "operation": "extract_entities",
                 "text": text,
                 "language": "auto",
-            }, "entity_extraction_intent"))
+            }))
 
     def _plan_local_kb(self, user_text, tool_trace, calls):
         if looks_like_local_kb(user_text):
@@ -504,7 +509,6 @@ class ToolPlanner:
                 calls,
                 "local_knowledge",
                 {"query": extract_local_kb_query(user_text)},
-                "local_kb_intent",
                 tool_trace,
             )
 
@@ -517,7 +521,6 @@ class ToolPlanner:
             calls,
             "datetime_now",
             arguments,
-            "datetime_intent",
             tool_trace,
         )
 
@@ -532,6 +535,5 @@ class ToolPlanner:
             calls,
             "web_search",
             arguments,
-            "web_fact_intent",
             tool_trace,
         )
