@@ -15,7 +15,8 @@ from config import (
 _cache = None
 _HEADERS = {"User-Agent": HTTP_USER_AGENT}
 
-_LOCAL_KB = {
+# Small offline demo fallback used when Wikidata is unavailable.
+_DEMO_LOCAL_KB = {
     "en": {
         "steve jobs": {
             "qid": "Q19837",
@@ -99,10 +100,10 @@ def _cache_key(name, lang):
 
 
 def search_local_kb(name, lang="en"):
-    records = _LOCAL_KB.get(lang, {})
+    records = _DEMO_LOCAL_KB.get(lang, {})
     record = records.get((name or "").strip().lower())
     if not record and lang != "en":
-        record = _LOCAL_KB.get("en", {}).get((name or "").strip().lower())
+        record = _DEMO_LOCAL_KB.get("en", {}).get((name or "").strip().lower())
     if not record:
         return []
 
@@ -112,7 +113,7 @@ def search_local_kb(name, lang="en"):
 
 
 def local_wikipedia_url(qid):
-    for records in _LOCAL_KB.values():
+    for records in _DEMO_LOCAL_KB.values():
         for record in records.values():
             if record.get("qid") == qid:
                 return record.get("wikipedia_url", "")

@@ -1,0 +1,4 @@
+dataset,method,accuracy,precision,recall,macro_f1,model_path
+custom,rule,0.8333,0.8889,0.8333,0.8222,
+custom,nb,0.3333,0.1111,0.3333,0.1667,in_memory_compare_model
+custom,rf,0.3333,0.1111,0.3333,0.1667,in_memory_compare_model

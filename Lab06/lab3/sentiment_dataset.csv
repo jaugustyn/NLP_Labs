@@ -18,3 +18,6 @@ text,label
 "Obsługa była świetna",pozytywny
 "Obsługa była fantastyczna",pozytywny
 "Obsługa była tragiczna","negatywny"
+"Ten kurs był bardzo pomocny.","pozytywny"
+"Ten kurs był całkowicie bezużyteczny.","negatywny"
+"Ten kurs był przeciętny.","neutralny"

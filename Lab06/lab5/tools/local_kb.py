@@ -1,7 +1,7 @@
 """Local knowledge tool — searches data accumulated across labs:
 - Lab 4 NEL cache (cache/nel_cache.json)
 - Lab 4 saved summaries (lab4results/summaries/*.txt)
-- Lab 1 sentences dataset (Lab01/sentences.json), if present
+- Lab 1 sentences dataset (lab1/sentences.json), if present
 """
 import glob
 import json

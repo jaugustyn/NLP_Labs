@@ -64,6 +64,9 @@ def main():
         assert dry["content_id"].startswith("dry_")
         assert _row_count(storage.MODERATION_LOG) == before_dry_run
 
+        political = models.classify_bielik_guard("Ci politykanci to złodzieje")
+        assert "political_opinion" not in political["categories"]
+
         feedback = actions.add_feedback(clean["content_id"], "REJECT", "Manual fix")
         assert feedback["status"] == "recorded"
         train = actions.train_on_feedback()

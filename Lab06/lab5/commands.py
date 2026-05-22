@@ -27,7 +27,7 @@ HELP_SECTION = (
     "  /tool_local_kb query=\"Paris\"\n"
     "  /tool_datetime [city=Tokyo|tz=Europe/Warsaw]\n"
     "  /tool_nlp operation=<translate|summarize|extract_entities|"
-    "classify_sentiment> text=\"...\" [target_language=...] [language=...]\n"
+    "classify_sentiment> text=\"...\" [target_language=ISO] [language=...]\n"
     "  /tool_vision  - send a photo with this caption\n"
 )
 
@@ -108,16 +108,31 @@ def _extract_text_param(rest):
         return ""
 
     if value[0] in ("\"", "'"):
-        quote = value[0]
-        end = value.find(quote, 1)
-        if end >= 0:
-            return value[1:end].strip()
-        return value[1:].strip()
+        return _read_quoted_value(value).strip()
 
     next_param = re.search(r"\s+\w+\s*=", value)
     if next_param:
         return value[:next_param.start()].strip()
     return value.strip()
+
+
+def _read_quoted_value(value):
+    quote = value[0]
+    chars = []
+    escaped = False
+    for char in value[1:]:
+        if escaped:
+            chars.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == quote:
+            return "".join(chars)
+        else:
+            chars.append(char)
+    if escaped:
+        chars.append("\\")
+    return "".join(chars)
 
 
 def _extract_agent_text(rest):
@@ -359,7 +374,8 @@ def _handle_tool_nlp(bot, message):
         bot.reply_to(
             message,
             'Usage: /tool_nlp operation=<translate|summarize|extract_entities|'
-            'classify_sentiment> text="..." [target_language=pl] [language=auto]',
+            'classify_sentiment> text="..." [target_language=pl for translate] '
+            '[language=auto]',
         )
         return
 

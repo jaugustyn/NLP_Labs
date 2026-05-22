@@ -200,7 +200,7 @@ Direct tool commands:
 - `/tool_search query="OpenAI" [language=en|pl]`
 - `/tool_local_kb query="Paris"`
 - `/tool_datetime [city=Tokyo|tz=Europe/Warsaw]`
-- `/tool_nlp operation=<translate|summarize|extract_entities|classify_sentiment> text="..." [target_language=...] [language=...]`
+- `/tool_nlp operation=<translate|summarize|extract_entities|classify_sentiment> text="..." [target_language=ISO for translate] [language=...]`
 - `/tool_vision` (send photo with this caption)
 
 ### Lab 6 (Moderation)
@@ -222,6 +222,96 @@ Direct tool commands:
 - `correct_decision`
 - `correct`
 - `poprawna_decyzja`
+
+## Usage Examples
+
+Copy-paste examples for Telegram testing. Commands that use external
+datasets, Ollama, translation models or live APIs can take longer on first run.
+
+### Lab 1
+
+```text
+/task tokenize "To jest prosty tekst do analizy NLP." "neutralny"
+/task remove_stopwords "To jest bardzo dobry przykład do testowania." "pozytywny"
+/task lemmatize "Koty biegały po ogrodzie." "neutralny"
+/task n-grams "Ala ma kota i kot ma Alę." "neutralny"
+/task plot_wordcloud "language model token sentence classification sentiment entity translation summary language model NLP" "neutral"
+/full_pipeline "Uwielbiam ten produkt. Polecam go znajomym!" "pozytywny"
+/classifier "Ten film był bardzo słaby i nudny."
+/stats
+```
+
+### Lab 2
+
+```text
+/classify dataset=amazon method=nb gridsearch=false run=1
+/classify dataset=imdb method=logreg gridsearch=false run=1
+/classify dataset=20news_group method=rf gridsearch=false run=1
+/classify dataset=ag_news method=all gridsearch=false run=1
+```
+
+### Lab 3
+
+```text
+/sentiment method=rule text="Bardzo nie polecam tego filmu!"
+/sentiment method=textblob text="This product is absolutely amazing."
+/sentiment method=nb dataset=custom text="Ten seans był niesamowicie głupi."
+/add_sentiment "Ten kurs był bardzo pomocny." "pozytywny"
+/compare dataset=custom methods=rule,nb,rf
+/train model=lstm dataset=custom max_len=100
+/models
+```
+
+### Lab 4
+
+```text
+/language_detect text="Warszawa to stolica Polski."
+/ner method=spacy text="Apple was founded by Steve Jobs in California." language=en
+/nel text="Steve Jobs founded Apple." language=en
+/ned entity="Paris" context="Paris is the capital of France." language=en
+/analyze_entities text="Marie Curie was born in Warsaw, studied in Paris and won Nobel Prizes in Physics and Chemistry." link=true language=en
+/translate text="Hello world" target_lang=pl source_lang=en
+/summarize text="Natural language processing is a field of artificial intelligence focused on analyzing and generating human language. It is used in search engines, chatbots, translation systems, sentiment analysis, spam detection and automatic summarization. Modern NLP systems often use machine learning models trained on large collections of text. These models can recognize patterns, classify documents, extract named entities and generate fluent answers. However, they may still make mistakes when the input is ambiguous, outdated or missing important context." summary_type=bullets length=short
+/knowledge_graph text="OpenAI developed ChatGPT. ChatGPT uses large language models. Microsoft invested in OpenAI. Sam Altman is the CEO of OpenAI. OpenAI is based in San Francisco." language=en
+```
+
+### Lab 5
+
+```text
+/tools
+/agent text="Porównaj pogodę w Warszawie i Paryżu"
+/agent text="Która godzina jest teraz w Tokio?"
+/agent text="Kto jest CEO Microsoftu?"
+/agent text="Ile to 2+2*sqrt(16)?"
+/agent text="Jaki jest sentyment tekstu \"Bardzo nie polecam tego filmu!\""
+/tool_calc expression="2+2*sqrt(16)"
+/tool_weather city="Warsaw"
+/tool_search query="OpenAI" language=en
+/tool_datetime city=Barcelona
+/tool_nlp operation=classify_sentiment text="Ten seans był niesamowicie głupi."
+/tool_nlp operation=summarize text="NLP helps process large collections of text, extract entities, detect sentiment and support automatic translation." language=en
+/tool_local_kb query="Steve Jobs"
+/tool_vision
+```
+
+For `/tool_vision`, send a photo with `/tool_vision` as caption.
+For `/agent`, a photo with caption `/agent text="Opisz co widać"` also works.
+
+### Lab 6
+
+```text
+/moderate "Uwielbiam ten produkt, najlepszy zakup!" user_id=user_ok username=Anna
+/moderate "Mój numer to +48 123 456 789, email to john@example.com" user_id=user_pii
+/moderate "Jesteś beznadziejny i powinienes sie zabic" user_id=user_bad
+/mod_policy_check "Kliknij promocja http://x.test http://y.test"
+/mod_history user_bad
+/mod_watchlist
+/mod_analytics
+/mod_status <content_id_from_moderate>
+/mod_add_feedback <content_id_from_moderate> "Moderator override test" "APPROVE"
+/mod_train_on_feedback
+/mod_help
+```
 
 ## Moderation Pipeline (Lab 6)
 
@@ -248,12 +338,6 @@ Moderation action tools include:
 - `find_similar_violations`
 - `add_feedback`
 - `train_on_feedback`
-
-Offline Lab6 smoke test:
-
-```bash
-python -m lab6._smoke_moderation
-```
 
 ## Outputs and Data Files
 
@@ -301,6 +385,8 @@ Lab06/
 ├── lab5/
 │   ├── commands.py
 │   ├── agent.py
+│   ├── tool_planner.py
+│   ├── location_resolver.py
 │   └── tools/
 ├── lab6/
 │   ├── commands.py

@@ -10,7 +10,11 @@ from lab3 import commands
 from lab3 import data_loader
 from lab3 import model_loader
 from lab3 import visualizations
-from lab3.sentiment_methods import predict_rule, train_sklearn_sentiment_model
+from lab3.sentiment_methods import (
+    predict_rule,
+    train_sklearn_sentiment_model,
+    _predict_sklearn,
+)
 
 
 def main():
@@ -61,6 +65,13 @@ def main():
                 label_names=train_label_names,
                 save=False,
             )
+            label, confidence = _predict_sklearn(
+                "Ten seans był niesamowicie głupi.",
+                artifact,
+            )
+            assert label == "negative"
+            assert confidence >= 0.75
+
             preds = commands._batch_predict(
                 "nb",
                 ["excellent product", "broken movie"],

@@ -34,6 +34,14 @@ _VIOLENCE = {
     "zabije", "pobije", "groze", "murder", "kill", "beat you",
 }
 _SEXUAL = {"porn", "porno", "sex", "nudes", "nagie"}
+_RULE_SCORES = {
+    "self_harm": 0.95,
+    "violence": 0.88,
+    "hate_speech": 0.84,
+    "sexual": 0.8,
+    "toxic": 0.74,
+    "spam": 0.72,
+}
 
 
 def _fold(text):
@@ -123,25 +131,22 @@ def classify_bielik_guard(text):
 
     if _contains_any(folded, _SELF_HARM):
         categories.append("self_harm")
-        score = max(score, 0.95)
+        score = max(score, _RULE_SCORES["self_harm"])
     if _contains_any(folded, _VIOLENCE):
         categories.append("violence")
-        score = max(score, 0.88)
+        score = max(score, _RULE_SCORES["violence"])
     if _contains_any(folded, _SEXUAL):
         categories.append("sexual")
-        score = max(score, 0.8)
+        score = max(score, _RULE_SCORES["sexual"])
     if _contains_any(folded, _TOXIC):
         categories.append("toxic")
-        score = max(score, 0.74)
+        score = max(score, _RULE_SCORES["toxic"])
     if _contains_any(folded, _SPAM) or len(_URL_RE.findall(text or "")) >= 2:
         categories.append("spam")
-        score = max(score, 0.72)
-    if "polityk" in folded and "zlodziej" in folded:
-        categories.append("political_opinion")
-        score = max(score, 0.62)
+        score = max(score, _RULE_SCORES["spam"])
     if re.search(r"\b(nienawidze|hate)\b.+\b(wszyscy|all)\b", folded):
         categories.append("hate_speech")
-        score = max(score, 0.84)
+        score = max(score, _RULE_SCORES["hate_speech"])
 
     if not categories:
         return {

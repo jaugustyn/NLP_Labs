@@ -5,6 +5,7 @@ import unicodedata
 
 import numpy as np
 
+from lab3.config import BINARY_LABEL_MAP
 from lab3.model_loader import (
     find_model_for_method,
     load_neural_model,
@@ -88,6 +89,9 @@ NEGATIVE_WORDS = {
     "fatalny",
     "frustrated",
     "garbage",
+    "glupi",
+    "glupia",
+    "glupie",
     "hate",
     "horrible",
     "kiepski",
@@ -123,7 +127,29 @@ NEGATION_WORDS = {"nie", "not", "never", "no", "bez"}
 
 
 def _normalize(value):
-    value = unicodedata.normalize("NFKD", value or "")
+    value = (value or "").translate(
+        str.maketrans({
+            "ą": "a",
+            "ć": "c",
+            "ę": "e",
+            "ł": "l",
+            "ń": "n",
+            "ó": "o",
+            "ś": "s",
+            "ź": "z",
+            "ż": "z",
+            "Ą": "A",
+            "Ć": "C",
+            "Ę": "E",
+            "Ł": "L",
+            "Ń": "N",
+            "Ó": "O",
+            "Ś": "S",
+            "Ź": "Z",
+            "Ż": "Z",
+        })
+    )
+    value = unicodedata.normalize("NFKD", value)
     value = "".join(char for char in value if not unicodedata.combining(char))
     return value.lower()
 
@@ -215,7 +241,25 @@ def _predict_sklearn(text, artifact):
     if hasattr(model, "predict_proba"):
         confidence = float(model.predict_proba(X_new).max())
     label = label_names[prediction] if prediction < len(label_names) else str(prediction)
+    rule_label, rule_confidence = predict_rule(text)
+    rule_label = _adapt_rule_label(rule_label, label_names)
+    if (
+        rule_label != "neutralny"
+        and rule_confidence >= 0.75
+        and (confidence < 0.6 or label in ("neutralny", "neutral"))
+    ):
+        fallback_confidence = max(confidence, min(rule_confidence, 0.85))
+        return rule_label, round(fallback_confidence, 4)
     return label, round(confidence, 4)
+
+
+def _adapt_rule_label(label, label_names):
+    if label in label_names:
+        return label
+    mapped = BINARY_LABEL_MAP.get(label, label)
+    if mapped in label_names:
+        return mapped
+    return label
 
 
 def predict_nb(text, dataset_name="imdb"):

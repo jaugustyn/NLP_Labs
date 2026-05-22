@@ -48,28 +48,15 @@ def _normalise_query(query):
                 flags=re.IGNORECASE,
             )
         entity = match.group(1) if match else cleaned
-        entity = re.sub(r"[?.!,;:].*$", "", entity).strip(" \"'")
-        entity = _normalise_entity_phrase(entity)
+        entity = _clean_entity_phrase(entity)
         if entity:
             return f"CEO {entity}"
     return cleaned
 
 
-def _normalise_entity_phrase(text):
-    words = []
-    for token in re.split(r"\s+", text or ""):
-        token = token.strip(" \"'.,!?;:()[]{}")
-        if not token:
-            continue
-        lower = token.lower()
-        if lower.endswith("'a"):
-            token = token[:-2]
-        elif lower.endswith("u") and len(token) > 4:
-            token = token[:-1]
-        elif lower.endswith("i") and len(token) > 4:
-            token = token[:-1] + "a"
-        words.append(token)
-    return " ".join(words)
+def _clean_entity_phrase(text):
+    text = re.sub(r"[?.!,;:].*$", "", text or "")
+    return re.sub(r"\s+", " ", text.strip(" \"'.,!?;:()[]{}"))
 
 
 def _wikipedia_summary(query, lang="en"):

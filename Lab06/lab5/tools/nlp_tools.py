@@ -184,7 +184,20 @@ def nlp_tools(
 
     if operation == "translate":
         src = _resolve_lang(text, language)
-        tgt = (target_language or "en").lower()
+        if not target_language:
+            return {
+                "operation": "translate",
+                "src": src,
+                "error": "target_language is required for translation.",
+            }
+        tgt = target_language.lower()
+        if not re.fullmatch(r"[a-z]{2}", tgt):
+            return {
+                "operation": "translate",
+                "src": src,
+                "tgt": tgt,
+                "error": "target_language must be a two-letter ISO 639-1 code.",
+            }
         if src == tgt:
             return {
                 "operation": "translate",
@@ -295,7 +308,7 @@ SCHEMA = {
                 "target_language": {
                     "type": "string",
                     "description": (
-                        "Target ISO 639-1 code for 'translate'. "
+                        "Required target ISO 639-1 code for 'translate'. "
                         "E.g. 'en', 'pl', 'de', 'fr', 'es'."
                     ),
                 },

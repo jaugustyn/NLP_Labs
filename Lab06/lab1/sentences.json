@@ -442,5 +442,33 @@
   {
     "text": "To jest świetna i bardzo duża chmura wyrazów z bardzo pozytywnym wydźwiękiem",
     "class": "pozytywny"
+  },
+  {
+    "text": "To jest prosty tekst do analizy NLP.",
+    "class": "neutralny"
+  },
+  {
+    "text": "To jest bardzo dobry przykład do testowania.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Koty biegały po ogrodzie.",
+    "class": "neutralny"
+  },
+  {
+    "text": "Ala ma kota i kot ma Alę.",
+    "class": "neutralny"
+  },
+  {
+    "text": "NLP NLP tekst analiza token tekst",
+    "class": "neutralny"
+  },
+  {
+    "text": "Uwielbiam ten produkt.",
+    "class": "pozytywny"
+  },
+  {
+    "text": "Polecam go znajomym!",
+    "class": "pozytywny"
   }
 ]

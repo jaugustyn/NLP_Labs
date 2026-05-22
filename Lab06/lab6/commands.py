@@ -49,16 +49,31 @@ def _extract_text_param(rest):
         return ""
 
     if value[0] in ("\"", "'"):
-        quote = value[0]
-        end = value.find(quote, 1)
-        if end >= 0:
-            return value[1:end].strip()
-        return value[1:].strip()
+        return _read_quoted_value(value).strip()
 
     next_param = re.search(r"\s+\w+\s*=", value)
     if next_param:
         return value[:next_param.start()].strip()
     return value.strip()
+
+
+def _read_quoted_value(value):
+    quote = value[0]
+    chars = []
+    escaped = False
+    for char in value[1:]:
+        if escaped:
+            chars.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == quote:
+            return "".join(chars)
+        else:
+            chars.append(char)
+    if escaped:
+        chars.append("\\")
+    return "".join(chars)
 
 
 def _extract_command_text(rest):

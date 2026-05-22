@@ -1,0 +1,5 @@
+embedding,model,accuracy,macro_f1,seed
+bow,nb,0.831,0.831,42
+tfidf,nb,0.846,0.8459,42
+word2vec,nb,0.574,0.5697,42
+glove,nb,0.667,0.6647,42
